@@ -1,3 +1,18 @@
+#pragma once
+#include "../dosbox-x/include/export/dosbox-x/hooklib.h"
+#include <errno.h>
+#include <pthread.h>
+#include "header.h"
+#include "segoff.h"
+#include "hooks.h"
+#include "callstack.h"
+#include "machine.h"
+
+// FIXME: REMOVE THIS HARDCODING
+#define CODE_START_SEG ((u16)0x823)
+
+#define ENABLE_DEBUG_CALLSTACK 0
+#define MAX_HOOKS 2048
 
 enum {
   HYDRA_EXEC_STATE_UNINIT = 0,

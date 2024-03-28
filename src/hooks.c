@@ -1,4 +1,4 @@
-#include "hooklib_private.h"
+#include "internal.h"
 
 static hydra_hook_entry_t hooks[MAX_HOOKS];
 static size_t num_hooks = 0;

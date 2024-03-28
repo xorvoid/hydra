@@ -1,4 +1,4 @@
-#include "hooklib_private.h"
+#include "internal.h"
 
 void _impl_call_far(u16 seg, u16 off)
 {

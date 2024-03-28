@@ -1,6 +1,4 @@
-#include "hooklib_private.h"
-#include <errno.h>
-#include <pthread.h>
+#include "internal.h"
 //#include "gizmo/gizmo.h"
 //#include "gizmo/hw_native.h"
 //#include "hw_dosbox.h"

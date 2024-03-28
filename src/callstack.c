@@ -1,4 +1,4 @@
-#include "hooklib_private.h"
+#include "internal.h"
 //#include "functions.h"
 
 // HAX

@@ -1,4 +1,4 @@
-#include "hooklib_private.h"
+#include "internal.h"
 #include <dlfcn.h>
 
 void hydra_cpu_dump(hooklib_machine_registers_t *cpu)
