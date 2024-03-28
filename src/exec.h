@@ -15,9 +15,9 @@ struct execution
   pthread_cond_t        cond_child[1];
   int                   state;
 
-  hook_entry_t *        hook;
+  hydra_hook_entry_t *        hook;
   hooklib_machine_t     machine;
-  hook_result_t         result;
+  hydra_hook_result_t         result;
 
   u16                   saved_cs;
   u16                   saved_ip;

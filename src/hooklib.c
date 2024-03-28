@@ -1,7 +1,7 @@
 #include "hooklib_private.h"
 #include <dlfcn.h>
 
-void hooklib_dump_cpu(hooklib_machine_registers_t *cpu)
+void hydra_cpu_dump(hooklib_machine_registers_t *cpu)
 {
   printf("CPU STATE:\n");
   printf("  AX: %04x  BX: %04x  CX: %04x  DX: %04x\n", cpu->ax, cpu->bx, cpu->cx, cpu->dx);

@@ -1,6 +1,7 @@
 
 SRC = [
   'hooklib.c',
+  'hooks.c',
   'callstack.c',
   'exec.c',
   'machine.c',
