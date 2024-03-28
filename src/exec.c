@@ -211,21 +211,21 @@ int hydra_exec_run(hooklib_machine_t *m)
       u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
       u16 ret_seg = m->hardware->mem_read16(m->hardware->ctx, addr + 2);
       u16 ret_off = m->hardware->mem_read16(m->hardware->ctx, addr + 0);
-      callstack_trigger_enter(ret_seg, ret_off);
+      hydra_callstack_trigger_enter(ret_seg, ret_off);
       return 1;
     } break;
     case HYDRA_RESULT_TYPE_CALL_NEAR: {
       m->registers->ip = result.new_ip;
       u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
       u16 ret_off = m->hardware->mem_read16(m->hardware->ctx, addr + 0);
-      callstack_trigger_enter(m->registers->cs, ret_off);
+      hydra_callstack_trigger_enter(m->registers->cs, ret_off);
       return 1;
     } break;
     case HYDRA_RESULT_TYPE_RET_NEAR: {
       u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
       m->registers->ip = m->hardware->mem_read16(m->hardware->ctx, addr + 0);
       m->registers->sp += 2;
-      callstack_ret(m);
+      hydra_callstack_ret(m);
       return 1;
     } break;
       /* case HYDRA_RESULT_TYPE_RET_FAR: { */

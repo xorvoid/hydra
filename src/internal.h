@@ -5,7 +5,6 @@
 #include "header.h"
 #include "segoff.h"
 #include "hooks.h"
-#include "callstack.h"
 #include "machine.h"
 
 // FIXME: REMOVE THIS HARDCODING
@@ -13,6 +12,9 @@
 
 #define ENABLE_DEBUG_CALLSTACK 0
 #define MAX_HOOKS 2048
+
+/********************************************************************/
+/* exec.c */
 
 enum {
   HYDRA_EXEC_STATE_UNINIT = 0,
@@ -43,3 +45,13 @@ void               execution_context_set(hydra_exec_ctx_t *ctx);
 
 void hydra_exec_init(hooklib_machine_hardware_t *hw, hooklib_audio_t *audio);
 int hydra_exec_run(hooklib_machine_t *m);
+
+/********************************************************************/
+/* callstack.c */
+
+void hydra_callstack_init(void);
+void hydra_callstack_trigger_enter(uint16_t seg, uint16_t off);
+void hydra_callstack_dump(void);
+void hydra_callstack_notify(hooklib_machine_t *m);
+void hydra_callstack_track(hooklib_machine_t *m, size_t interrupt_count);
+void hydra_callstack_ret(hooklib_machine_t *m);

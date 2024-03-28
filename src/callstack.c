@@ -62,7 +62,7 @@ static segoff_t jmp_ret[] = {
   {0x0000, 0x17d9},
 };
 
-void callstack_init(void)
+void hydra_callstack_init(void)
 {
   c->last_interrupt_count = 0;
   c->last_code.seg        = 0;
@@ -71,7 +71,7 @@ void callstack_init(void)
   c->call_event           = CALL_EVENT_NONE;
 }
 
-void callstack_trigger_enter(u16 seg, u16 off)
+void hydra_callstack_trigger_enter(u16 seg, u16 off)
 {
   assert(c->call_event == CALL_EVENT_NONE);
   c->last_code.seg = seg;
@@ -79,7 +79,7 @@ void callstack_trigger_enter(u16 seg, u16 off)
   c->call_event = CALL_EVENT_CALL;
 }
 
-void callstack_dump(void)
+void hydra_callstack_dump(void)
 {
   printf("Call Stack:\n");
   for (size_t i = 0; i < c->call_idx; i++) {
@@ -96,8 +96,8 @@ void callstack_dump(void)
 static call_t *callstack_push(segoff_t src, segoff_t dst, size_t *_depth)
 {
   if (c->call_idx >= ARRAY_SIZE(c->call_stack)) {
-    callstack_dump();
-    abort();
+    hydra_callstack_dump();
+    FAIL("Aborting due to callstack overflow!");
   }
 
   call_t *call = &c->call_stack[c->call_idx++];
@@ -310,7 +310,7 @@ static void update(hooklib_machine_t *m, size_t interrupt_count)
   if (is_instr_ret(m))   c->call_event = CALL_EVENT_RET;
 }
 
-void callstack_notify(hooklib_machine_t *m)
+void hydra_callstack_notify(hooklib_machine_t *m)
 {
   // Handle call event actions that are defered from previous instr
   // because we need post-execution information
@@ -334,14 +334,14 @@ void callstack_notify(hooklib_machine_t *m)
   c->last_code.off = m->registers->ip;
 }
 
-void callstack_track(hooklib_machine_t *m, size_t interrupt_count)
+void hydra_callstack_track(hooklib_machine_t *m, size_t interrupt_count)
 {
   update(m, interrupt_count);
   c->last_code.seg = m->registers->cs;
   c->last_code.off = m->registers->ip;
 }
 
-void callstack_ret(hooklib_machine_t *m)
+void hydra_callstack_ret(hooklib_machine_t *m)
 {
   assert(c->call_event == CALL_EVENT_NONE);
   c->call_event = CALL_EVENT_RET;
