@@ -1,18 +1,18 @@
 
-typedef struct hydra_hook_entry  hydra_hook_entry_t;
-typedef struct hydra_hook_result hydra_hook_result_t;
+typedef struct hydra_hook   hydra_hook_t;
+typedef struct hydra_result hydra_result_t;
 
 enum {
-  HYDRA_HOOK_RESULT_TYPE_RESUME,
-  HYDRA_HOOK_RESULT_TYPE_JUMP,
-  HYDRA_HOOK_RESULT_TYPE_JUMP_NEAR,
-  HYDRA_HOOK_RESULT_TYPE_CALL,
-  HYDRA_HOOK_RESULT_TYPE_CALL_NEAR,
-  HYDRA_HOOK_RESULT_TYPE_RET_NEAR,
-  /* HYDRA_HOOK_RESULT_TYPE_RET_FAR, */
+  HYDRA_RESULT_TYPE_RESUME,
+  HYDRA_RESULT_TYPE_JUMP,
+  HYDRA_RESULT_TYPE_JUMP_NEAR,
+  HYDRA_RESULT_TYPE_CALL,
+  HYDRA_RESULT_TYPE_CALL_NEAR,
+  HYDRA_RESULT_TYPE_RET_NEAR,
+  /* HYDRA_RESULT_TYPE_RET_FAR, */
 };
 
-struct hydra_hook_result
+struct hydra_result
 {
   int type;
   uint16_t new_cs;
@@ -20,43 +20,43 @@ struct hydra_hook_result
 };
 
 enum {
-  HYDRA_HOOK_ENTRY_FLAGS_OVERLAY = 1<<0,
+  HYDRA_HOOK_FLAGS_OVERLAY = 1<<0,
 };
 
-struct hydra_hook_entry
+struct hydra_hook
 {
-  hydra_hook_result_t (*func)(hooklib_machine_t *);
+  hydra_result_t (*func)(hooklib_machine_t *);
   uint16_t hook_cs, hook_ip;
   int flags;
 };
 
-void hydra_hook_register(hydra_hook_entry_t entry);
-hydra_hook_entry_t * hydra_hook_find(segoff_t addr);
+void hydra_hook_register(hydra_hook_t entry);
+hydra_hook_t * hydra_hook_find(segoff_t addr);
 
 // OLD
 #define HOOK_REGISTER(func, seg, off, flags) do {  \
-  hydra_hook_entry_t ent = {(func), (seg), (off), (flags)}; \
+  hydra_hook_t ent = {(func), (seg), (off), (flags)}; \
   hydra_hook_register(ent); \
 } while(0)
 
 // NEW
 #define HOOK_REG(name, flags) do {  \
     const char *f_name = "F_" #name; \
-    hydra_hook_result_t (*h_func)(hooklib_machine_t *) = H_ ## name; \
+    hydra_result_t (*h_func)(hooklib_machine_t *) = H_ ## name; \
     const funcdef_t *def = function_find(f_name);                      \
     if (!def) FAIL("Cannot find function '%s' to register", f_name); \
-    hydra_hook_entry_t ent = {h_func, def->addr.seg, def->addr.off, (flags)}; \
+    hydra_hook_t ent = {h_func, def->addr.seg, def->addr.off, (flags)}; \
   hydra_hook_register(ent);                      \
 } while(0)
 
-hydra_hook_result_t H_DEAD(hooklib_machine_t *m);
+hydra_result_t H_DEAD(hooklib_machine_t *m);
 #define HOOK_DEAD(func, seg, off, flags) HOOK_REGISTER(H_DEAD, seg, off, flags)
 
-#define HOOK_FUNC(name) hydra_hook_result_t name(hooklib_machine_t *m)
+#define HOOK_FUNC(name) hydra_result_t name(hooklib_machine_t *m)
 
-#define HOOK_RESUME() ({ hydra_hook_result_t res = {HYDRA_HOOK_RESULT_TYPE_RESUME, -1, -1}; res; })
-#define HOOK_JUMP(seg, off) ({ hydra_hook_result_t res = {HYDRA_HOOK_RESULT_TYPE_JUMP, seg, off}; res; })
-#define HOOK_JUMP_NEAR(off) ({ hydra_hook_result_t res = {HYDRA_HOOK_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
+#define HOOK_RESUME() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RESUME, -1, -1}; res; })
+#define HOOK_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
+#define HOOK_JUMP_NEAR(off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
 
 // JUMP TO WHERE A NEAR OR FAR RET IS (LOL)
 // FOR SOME REASON WE CAN SEEM TO IMPL IT DIRECTLY.. MAYBE DOSBOX-X GETS CONFUSED?
@@ -68,10 +68,10 @@ hydra_hook_result_t H_DEAD(hooklib_machine_t *m);
 })
 
 // XXX BROKEN: FIXME
-/* #define HOOK_RET_FAR() ({ hook_result_t res = {HOOK_RESULT_TYPE_RET_FAR, -1, -1}; res; }) */
+/* #define HOOK_RET_FAR() ({ result_t res = {RESULT_TYPE_RET_FAR, -1, -1}; res; }) */
 
 
-#define HOOK_RET_NEAR() ({ hydra_hook_result_t res = {HYDRA_HOOK_RESULT_TYPE_RET_NEAR, -1, -1}; res; })
+#define HOOK_RET_NEAR() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_NEAR, -1, -1}; res; })
 #define RETURN_NEAR() return HOOK_RET_NEAR()
 
 // TODO: MOVE THIS SOMEWHERE BETTER?

@@ -18,7 +18,7 @@ void _impl_call_far(u16 seg, u16 off)
   exec->saved_ip = m->registers->ip;
 
   // Update the cpu to the call site
-  exec->result.type = HYDRA_HOOK_RESULT_TYPE_CALL;
+  exec->result.type = HYDRA_RESULT_TYPE_CALL;
   exec->result.new_cs = seg;
   exec->result.new_ip = off;
 
@@ -59,7 +59,7 @@ void _impl_call_near(u16 off)
 
   // Update the cpu to the call site
   assert(m->registers->cs >= CODE_START_SEG);
-  exec->result.type = HYDRA_HOOK_RESULT_TYPE_CALL_NEAR;
+  exec->result.type = HYDRA_RESULT_TYPE_CALL_NEAR;
   exec->result.new_ip = off - 16*(m->registers->cs - CODE_START_SEG);
 
   // Wake up the main thread

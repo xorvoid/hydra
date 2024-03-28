@@ -30,9 +30,9 @@ struct hydra_exec_ctx
   pthread_cond_t        cond_child[1];
   int                   state;  // HYDRA_EXEC_STATE_*
 
-  hydra_hook_entry_t *        hook;
+  hydra_hook_t *        hook;
   hooklib_machine_t     machine;
-  hydra_hook_result_t         result;
+  hydra_result_t        result;
 
   u16                   saved_cs;
   u16                   saved_ip;

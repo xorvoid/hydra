@@ -69,12 +69,12 @@ static void execution_release(hydra_exec_ctx_t *exec)
   exec->state = HYDRA_EXEC_STATE_IDLE;
 }
 
-static hydra_hook_result_t run_wait(hydra_exec_ctx_t *exec, hooklib_machine_t *m)
+static hydra_result_t run_wait(hydra_exec_ctx_t *exec, hooklib_machine_t *m)
 {
   int ret = pthread_cond_wait(exec->cond_main, exec->mutex);
   if (ret != 0) FAIL("Failed to cond wait");
 
-  hydra_hook_result_t result = exec->result;
+  hydra_result_t result = exec->result;
   pthread_mutex_unlock(exec->mutex);
 
   memcpy(m, &exec->machine, sizeof(*m));
@@ -87,9 +87,9 @@ static hydra_hook_result_t run_wait(hydra_exec_ctx_t *exec, hooklib_machine_t *m
   return result;
 }
 
-static hydra_hook_result_t run_begin(hydra_hook_entry_t *hook, hooklib_machine_t *m)
+static hydra_result_t run_begin(hydra_hook_t *hook, hooklib_machine_t *m)
 {
-  if (hook->flags & HYDRA_HOOK_ENTRY_FLAGS_OVERLAY) {
+  if (hook->flags & HYDRA_HOOK_FLAGS_OVERLAY) {
     // On first entry to the overlay, it calls an interrupt "int 0x3f"
     // to page in the segment. We want to allow this to happen. After the
     // overlay pager is done, it modified the code to a far-jump and returns
@@ -132,7 +132,7 @@ static hydra_hook_result_t run_begin(hydra_hook_entry_t *hook, hooklib_machine_t
   return run_wait(exec, m);
 }
 
-static hydra_hook_result_t run_continue(hooklib_machine_t *m, hydra_exec_ctx_t *exec)
+static hydra_result_t run_continue(hooklib_machine_t *m, hydra_exec_ctx_t *exec)
 {
   assert(exec->state == HYDRA_EXEC_STATE_ACTIVE);
 
@@ -144,7 +144,7 @@ static hydra_hook_result_t run_continue(hooklib_machine_t *m, hydra_exec_ctx_t *
   return run_wait(exec, m);
 }
 
-static bool try_resume(hooklib_machine_t *m, hydra_hook_result_t *_result)
+static bool try_resume(hooklib_machine_t *m, hydra_result_t *_result)
 {
   // Resume a retf ?
   if (m->registers->cs == 0xffff) {
@@ -171,7 +171,7 @@ void hydra_exec_init(hooklib_machine_hardware_t *hw, hooklib_audio_t *audio)
 
 int hydra_exec_run(hooklib_machine_t *m)
 {
-  hydra_hook_result_t result = HOOK_RESUME();
+  hydra_result_t result = HOOK_RESUME();
 
   /* printf("Hook run | CS:IP = %04x:%04x\n", */
   /*        m->registers->cs - CODE_START_SEG, m->registers->ip); */
@@ -185,7 +185,7 @@ int hydra_exec_run(hooklib_machine_t *m)
       .seg = m->registers->cs,
       .off = m->registers->ip,
     };
-    hydra_hook_entry_t *ent = hydra_hook_find(s);
+    hydra_hook_t *ent = hydra_hook_find(s);
     if (ent) {
       result = run_begin(ent, m);
     }
@@ -193,19 +193,19 @@ int hydra_exec_run(hooklib_machine_t *m)
 
   // Figure out how to update / re-direct the CS:IP
   switch (result.type) {
-    case HYDRA_HOOK_RESULT_TYPE_RESUME: {
+    case HYDRA_RESULT_TYPE_RESUME: {
       return 0;
     } break;
-    case HYDRA_HOOK_RESULT_TYPE_JUMP: {
+    case HYDRA_RESULT_TYPE_JUMP: {
       m->registers->cs = result.new_cs + CODE_START_SEG;
       m->registers->ip = result.new_ip;
       return 1;
     } break;
-    case HYDRA_HOOK_RESULT_TYPE_JUMP_NEAR: {
+    case HYDRA_RESULT_TYPE_JUMP_NEAR: {
       m->registers->ip = result.new_ip;
       return 1;
     } break;
-    case HYDRA_HOOK_RESULT_TYPE_CALL: {
+    case HYDRA_RESULT_TYPE_CALL: {
       m->registers->cs = result.new_cs + CODE_START_SEG;
       m->registers->ip = result.new_ip;
       u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
@@ -214,21 +214,21 @@ int hydra_exec_run(hooklib_machine_t *m)
       callstack_trigger_enter(ret_seg, ret_off);
       return 1;
     } break;
-    case HYDRA_HOOK_RESULT_TYPE_CALL_NEAR: {
+    case HYDRA_RESULT_TYPE_CALL_NEAR: {
       m->registers->ip = result.new_ip;
       u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
       u16 ret_off = m->hardware->mem_read16(m->hardware->ctx, addr + 0);
       callstack_trigger_enter(m->registers->cs, ret_off);
       return 1;
     } break;
-    case HYDRA_HOOK_RESULT_TYPE_RET_NEAR: {
+    case HYDRA_RESULT_TYPE_RET_NEAR: {
       u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
       m->registers->ip = m->hardware->mem_read16(m->hardware->ctx, addr + 0);
       m->registers->sp += 2;
       callstack_ret(m);
       return 1;
     } break;
-      /* case HYDRA_HOOK_RESULT_TYPE_RET_FAR: { */
+      /* case HYDRA_RESULT_TYPE_RET_FAR: { */
       /*   u32 top_of_stack = 16 * (u32)cpu->ss + (u32)cpu->sp; */
       /*   cpu->ip = m->hardware->mem_read16(m, top_of_stack); */
       /*   cpu->cs = m->hardware->mem_read16(m, top_of_stack+2); */
