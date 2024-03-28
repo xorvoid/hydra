@@ -1,0 +1,3 @@
+[submodule "dosbox-x"]
+	path = dosbox-x
+	url = git@github.com:xorvoid/dosbox-x.git
