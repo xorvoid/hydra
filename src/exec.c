@@ -8,29 +8,29 @@
 //#include "functions.h"
 
 #define MAX_EXEC 1024
-static execution_t executions[MAX_EXEC];
-static execution_t *thread_active = NULL;
+static hydra_exec_ctx_t executions[MAX_EXEC];
+static hydra_exec_ctx_t *thread_active = NULL;
 
-execution_t *execution_context_get(u16 *opt_exec_id)
+hydra_exec_ctx_t *execution_context_get(u16 *opt_exec_id)
 {
-  execution_t *exec = thread_active;
+  hydra_exec_ctx_t *exec = thread_active;
   if (opt_exec_id) *opt_exec_id = exec - &executions[0];
   return exec;
 }
 
-void execution_context_set(execution_t *exec)
+void execution_context_set(hydra_exec_ctx_t *exec)
 {
   thread_active = exec;
 }
 
 static void *thread_func(void *_usr)
 {
-  execution_t *exec = (execution_t*)_usr;
+  hydra_exec_ctx_t *exec = (hydra_exec_ctx_t*)_usr;
   pthread_mutex_lock(exec->mutex);
   thread_active = exec;
 
   exec->result = exec->hook->func(&exec->machine);
-  exec->state = STATE_DONE;
+  exec->state = HYDRA_EXEC_STATE_DONE;
 
   pthread_cond_signal(exec->cond_main);
   pthread_mutex_unlock(exec->mutex);
@@ -38,9 +38,9 @@ static void *thread_func(void *_usr)
   return NULL;
 }
 
-static void execution_init(execution_t *exec)
+static void execution_init(hydra_exec_ctx_t *exec)
 {
-  if (exec->state != STATE_UNINIT) return;
+  if (exec->state != HYDRA_EXEC_STATE_UNINIT) return;
 
   int ret = pthread_mutex_init(exec->mutex, NULL);
   if (ret != 0) FAIL("Failed to init mutex");
@@ -52,26 +52,26 @@ static void execution_init(execution_t *exec)
   if (ret != 0) FAIL("Failed to init cond");
 }
 
-static execution_t *execution_acquire(void)
+static hydra_exec_ctx_t *execution_acquire(void)
 {
   for (size_t i = 0; i < ARRAY_SIZE(executions); i++) {
-    execution_t *exec = &executions[i];
-    if (exec->state > STATE_IDLE) continue;
+    hydra_exec_ctx_t *exec = &executions[i];
+    if (exec->state > HYDRA_EXEC_STATE_IDLE) continue;
 
     execution_init(exec);
-    exec->state = STATE_ACTIVE;
+    exec->state = HYDRA_EXEC_STATE_ACTIVE;
     return exec;
   }
   FAIL("Reached MAX_EXEC");
 }
 
-static void execution_release(execution_t *exec)
+static void execution_release(hydra_exec_ctx_t *exec)
 {
-  assert(exec->state != STATE_IDLE);
-  exec->state = STATE_IDLE;
+  assert(exec->state != HYDRA_EXEC_STATE_IDLE);
+  exec->state = HYDRA_EXEC_STATE_IDLE;
 }
 
-static hydra_hook_result_t run_wait(execution_t *exec, hooklib_machine_t *m)
+static hydra_hook_result_t run_wait(hydra_exec_ctx_t *exec, hooklib_machine_t *m)
 {
   int ret = pthread_cond_wait(exec->cond_main, exec->mutex);
   if (ret != 0) FAIL("Failed to cond wait");
@@ -81,7 +81,7 @@ static hydra_hook_result_t run_wait(execution_t *exec, hooklib_machine_t *m)
 
   memcpy(m, &exec->machine, sizeof(*m));
 
-  if (exec->state == STATE_DONE) {
+  if (exec->state == HYDRA_EXEC_STATE_DONE) {
     pthread_join(exec->thread, NULL);
     execution_release(exec);
   }
@@ -121,7 +121,7 @@ static hydra_hook_result_t run_begin(hydra_hook_entry_t *hook, hooklib_machine_t
     m->registers->ip = off;
   }
 
-  execution_t *exec = execution_acquire();
+  hydra_exec_ctx_t *exec = execution_acquire();
 
   pthread_mutex_lock(exec->mutex);
 
@@ -134,9 +134,9 @@ static hydra_hook_result_t run_begin(hydra_hook_entry_t *hook, hooklib_machine_t
   return run_wait(exec, m);
 }
 
-static hydra_hook_result_t run_continue(hooklib_machine_t *m, execution_t *exec)
+static hydra_hook_result_t run_continue(hooklib_machine_t *m, hydra_exec_ctx_t *exec)
 {
-  assert(exec->state == STATE_ACTIVE);
+  assert(exec->state == HYDRA_EXEC_STATE_ACTIVE);
 
   pthread_mutex_lock(exec->mutex);
   memcpy(&exec->machine, m, sizeof(*m));
@@ -146,15 +146,11 @@ static hydra_hook_result_t run_continue(hooklib_machine_t *m, execution_t *exec)
   return run_wait(exec, m);
 }
 
-void exec_init(hooklib_machine_hardware_t *hw, hooklib_audio_t *audio)
-{
-}
-
 static bool try_resume(hooklib_machine_t *m, hydra_hook_result_t *_result)
 {
   // Resume a retf ?
   if (m->registers->cs == 0xffff) {
-    execution_t *exec = &executions[m->registers->ip];
+    hydra_exec_ctx_t *exec = &executions[m->registers->ip];
     *_result = run_continue(m, exec);
     return true;
   }
@@ -162,7 +158,7 @@ static bool try_resume(hooklib_machine_t *m, hydra_hook_result_t *_result)
   // Resume a ret ?
   if (m->registers->cs != 0xf000 && m->registers->ip >= 0xff00) {
     size_t idx = m->registers->ip & 0xff;
-    execution_t *exec = &executions[idx];
+    hydra_exec_ctx_t *exec = &executions[idx];
     if (m->registers->cs != exec->saved_cs) FAIL("Expected matching code segments");
     *_result = run_continue(m, exec);
     return true;
@@ -171,7 +167,11 @@ static bool try_resume(hooklib_machine_t *m, hydra_hook_result_t *_result)
   return false;
 }
 
-int exec_run(hooklib_machine_t *m)
+void hydra_exec_init(hooklib_machine_hardware_t *hw, hooklib_audio_t *audio)
+{
+}
+
+int hydra_exec_run(hooklib_machine_t *m)
 {
   hydra_hook_result_t result = HOOK_RESUME();
 

@@ -14,7 +14,7 @@ void hydra_cpu_dump(hooklib_machine_registers_t *cpu)
 HOOKLIB_INIT_FUNC(hooklib_init)
 {
   callstack_init();
-  exec_init(hw, audio);
+  hydra_exec_init(hw, audio);
 
   // User init
   void (*hydra_user_init)(hooklib_machine_hardware_t *hw, hooklib_audio_t *audio) = NULL;
@@ -28,7 +28,7 @@ HOOKLIB_EXEC_FUNC(hooklib_exec)
   if (m->registers->cs != 0xffff) {
     callstack_track(m, interrupt_count);
   }
-  return exec_run(m);
+  return hydra_exec_run(m);
 }
 
 HOOKLIB_NOTIFY_FUNC(hooklib_notify)

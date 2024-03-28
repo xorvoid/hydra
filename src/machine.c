@@ -4,7 +4,7 @@ void _impl_call_far(u16 seg, u16 off)
 {
   // Grab the current execution context
   u16 exec_id = 0;
-  execution_t *exec = execution_context_get(&exec_id);
+  hydra_exec_ctx_t *exec = execution_context_get(&exec_id);
 
   // Save a return reference to this executor on the 8086 stack
   hooklib_machine_t *m = &exec->machine;
@@ -42,7 +42,7 @@ void _impl_call_near(u16 off)
 {
   // Grab the current execution context
   u16 exec_id = 0;
-  execution_t *exec = execution_context_get(&exec_id);
+  hydra_exec_ctx_t *exec = execution_context_get(&exec_id);
 
   // We only support a very small number of near call exec ids
   assert(exec_id <= 255);
@@ -116,7 +116,7 @@ void _impl_raw_code(u8 *code, size_t code_sz)
 #define MAX_RAW_CODE 128
   assert(code_sz <= MAX_RAW_CODE);
 
-  execution_t *exec = execution_context_get(NULL);
+  hydra_exec_ctx_t *exec = execution_context_get(NULL);
   hooklib_machine_t *m = &exec->machine;
 
   u8   code_saved[MAX_RAW_CODE];
@@ -154,7 +154,7 @@ void _impl_sti(void)
 // inb al,PORT
 u8 _impl_inb(u16 port)
 {
-  execution_t *exec = execution_context_get(NULL);
+  hydra_exec_ctx_t *exec = execution_context_get(NULL);
   hooklib_machine_t *m = &exec->machine;
 
   u8 save_ax = m->registers->ax;
@@ -174,7 +174,7 @@ u8 _impl_inb(u16 port)
 // outb PORT, al
 void _impl_outb(u16 port, u8 val)
 {
-  execution_t *exec = execution_context_get(NULL);
+  hydra_exec_ctx_t *exec = execution_context_get(NULL);
   hooklib_machine_t *m = &exec->machine;
 
   u8 save_ax = m->registers->ax;
