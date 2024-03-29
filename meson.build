@@ -79,15 +79,9 @@ if not meson.is_subproject()
 endif
 
 ##################################
-## Dependencies
-
-dosbox_hooklib_dep = declare_dependency(
-  include_directories: include_directories('../dosbox-x/include/export')
-)
-
-##################################
 ## Definitions
 subdir('src')
+subdir('py')
 
 libhydra_dep = declare_dependency(
   include_directories : include_directories('include'),

@@ -10,5 +10,5 @@ SRC = [
 
 libhydra = shared_library(
   'hydra', SRC,
-  dependencies: dosbox_hooklib_dep,
+  #dependencies: dosbox_hooklib_dep,
 )

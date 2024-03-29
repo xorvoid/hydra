@@ -1,5 +1,5 @@
 #pragma once
-#include "../dosbox-x/include/export/dosbox-x/hooklib.h"
+#include "dosbox-x/include/export/dosbox-x/hooklib.h"
 #include <errno.h>
 #include <pthread.h>
 #include "header.h"
