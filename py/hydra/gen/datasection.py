@@ -5,10 +5,9 @@ def gen_hdr(datasection, out=None):
     def emit(s): print(s, file=f)
 
     emit('#pragma once')
+    emit('#include "hydra/hydra.h"')
     emit('#include "header.h"')
     emit('#include "structures.h"')
-    emit('')
-    emit('extern u8 *data_section_baseptr;')
     emit('')
 
     for var in datasection:
@@ -17,4 +16,4 @@ def gen_hdr(datasection, out=None):
         end = ''
         if var.typ.is_array:
             end = f' /* array: {var.typ} */'
-        emit(f'#define {var.name:30} ({start:15} (data_section_baseptr + 0x{var.off:04x})){end}')
+        emit(f'#define {var.name:30} ({start:15} (hydra_datasection_baseptr() + 0x{var.off:04x})){end}')

@@ -13,6 +13,7 @@ void hydra_cpu_dump(hooklib_machine_registers_t *cpu)
 
 HOOKLIB_INIT_FUNC(hooklib_init)
 {
+  hydra_function_metadata_init();
   hydra_callstack_init();
   hydra_exec_init(hw, audio);
 

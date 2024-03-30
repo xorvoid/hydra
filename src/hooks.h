@@ -43,7 +43,7 @@ hydra_hook_t * hydra_hook_find(segoff_t addr);
 #define HOOK_REG(name, flags) do {  \
     const char *f_name = "F_" #name; \
     hydra_result_t (*h_func)(hooklib_machine_t *) = H_ ## name; \
-    const funcdef_t *def = function_find(f_name);                      \
+    const function_def_t *def = function_find(f_name);                      \
     if (!def) FAIL("Cannot find function '%s' to register", f_name); \
     hydra_hook_t ent = {h_func, def->addr.seg, def->addr.off, (flags)}; \
   hydra_hook_register(ent);                      \

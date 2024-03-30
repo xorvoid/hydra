@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import argparse
-from hydra.gen import load, functions, datasection, dis86
+from hydra.gen import load, functions, datasection, appdata, dis86
 
 def run():
     parser = argparse.ArgumentParser(description='Generate annotation tables')
@@ -9,6 +9,8 @@ def run():
     parser.add_argument('--output-path', type=str, help='path to write the generated output')
     parser.add_argument('--functions-hdr', action='store_true', help='generate functions')
     parser.add_argument('--datasection-hdr', action='store_true', help='generate datasection')
+    parser.add_argument('--appdata-hdr', action='store_true', help='generate appdata header')
+    parser.add_argument('--appdata-src', action='store_true', help='generate appdata source')
     parser.add_argument('--dis86-conf', action='store_true', help='generate dis86 configuration file')
 
     args = parser.parse_args()
@@ -27,6 +29,12 @@ def generate(args, data, out):
 
     elif args.datasection_hdr:
         datasection.gen_hdr(data['data_section'], out)
+
+    elif args.appdata_hdr:
+        appdata.gen_hdr(data, out)
+
+    elif args.appdata_src:
+        appdata.gen_src(data, out)
 
     elif args.dis86_conf:
         dis86.gen_conf(data, out)

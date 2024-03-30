@@ -1,8 +1,4 @@
 #include "internal.h"
-//#include "functions.h"
-
-// HAX
-static const char *function_name(segoff_t s) { return "UNKNOWN_FIXME"; }
 
 typedef struct call       call_t;
 typedef struct handler    handler_t;

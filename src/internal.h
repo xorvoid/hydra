@@ -6,6 +6,7 @@
 #include "segoff.h"
 #include "hooks.h"
 #include "machine.h"
+#include "functions.h"
 
 // FIXME: REMOVE THIS HARDCODING
 #define CODE_START_SEG ((u16)0x823)
