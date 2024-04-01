@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "../../src/typedefs.h"
-#include "../../src/segoff.h"
+#include "../../src/addr.h"
 #include "../../src/conf.h"
 #include "../../src/hooklib.h"
 #include "../../src/hooks.h"

@@ -23,19 +23,19 @@ const hydra_function_def_t * hydra_function_find(const char *name)
   return NULL;
 }
 
-const char *hydra_function_name(segoff_t s)
+const char *hydra_function_name(addr_t s)
 {
- u32 addr = segoff_abs(s);
+ u32 addr = addr_abs(s);
   for (size_t i = 0; i < md->n_defs; i++) {
     const hydra_function_def_t *f = &md->defs[i];
-    if (addr == segoff_abs(f->addr)) {
+    if (addr == addr_abs(f->addr)) {
       return f->name;
     }
   }
   return NULL;
 }
 
-bool hydra_function_addr(const char *name, segoff_t *_out)
+bool hydra_function_addr(const char *name, addr_t *_out)
 {
   for (size_t i = 0; i < md->n_defs; i++) {
     const hydra_function_def_t *f = &md->defs[i];

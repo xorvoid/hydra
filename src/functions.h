@@ -4,7 +4,7 @@ typedef struct hydra_function_def       hydra_function_def_t;
 struct hydra_function_def
 {
   const char *name;
-  segoff_t addr;
+  addr_t addr;
 };
 
 
@@ -16,5 +16,5 @@ struct hydra_function_metadata
 
 void                         hydra_function_metadata_init(void);
 const hydra_function_def_t * hydra_function_find(const char *name);
-const char *                 hydra_function_name(segoff_t s);
-bool                         hydra_function_addr(const char *name, segoff_t *_out);
+const char *                 hydra_function_name(addr_t s);
+bool                         hydra_function_addr(const char *name, addr_t *_out);

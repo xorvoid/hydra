@@ -31,7 +31,7 @@ struct hydra_hook
 };
 
 void hydra_hook_register(hydra_hook_t entry);
-hydra_hook_t * hydra_hook_find(segoff_t addr);
+hydra_hook_t * hydra_hook_find(addr_t addr);
 
 // OLD
 #define HOOK_REGISTER(func, seg, off, flags) do {  \

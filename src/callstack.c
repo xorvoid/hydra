@@ -6,8 +6,8 @@ typedef struct callstack  callstack_t;
 
 struct call
 {
-  segoff_t src;
-  segoff_t dst;
+  addr_t src;
+  addr_t dst;
 };
 
 struct handler
@@ -27,7 +27,7 @@ enum {
 struct callstack
 {
   size_t   last_interrupt_count;
-  segoff_t last_code;
+  addr_t last_code;
 
   call_t call_stack[1024];
   size_t call_idx;
@@ -46,14 +46,14 @@ static u64 ignore_segments[] = {
   0xf000, /* DOS interrupt handlers */
 };
 
-static segoff_t ignore_addrs[] = {
+static addr_t ignore_addrs[] = {
   /* Mouse handler calls some function that causes the call stack to get botched: ignore it */
   {0x0454, 0x00b7},
   /* Keyboard handler calls some function that cause call stack to get botched: ignore it */
   {0x0454, 0x0179},
 };
 
-static segoff_t jmp_ret[] = {
+static addr_t jmp_ret[] = {
   /* Jump from data section to return (weird) */
   {0x0000, 0x17d9},
 };
@@ -80,16 +80,16 @@ void hydra_callstack_dump(void)
   printf("Call Stack:\n");
   for (size_t i = 0; i < c->call_idx; i++) {
     call_t *call = &c->call_stack[i];
-    segoff_t src = segoff_relative_to_segment(call->src, CODE_START_SEG);
-    segoff_t dst = segoff_relative_to_segment(call->dst, CODE_START_SEG);
+    addr_t src = addr_relative_to_segment(call->src, CODE_START_SEG);
+    addr_t dst = addr_relative_to_segment(call->dst, CODE_START_SEG);
     const char *src_name = hydra_function_name(src);
     const char *dst_name = hydra_function_name(dst);
-    printf("  %zu  " SEGOFF_FMT " => " SEGOFF_FMT " | %s => %s\n", i, SEGOFF_ARG(src), SEGOFF_ARG(dst), src_name, dst_name);
+    printf("  %zu  " ADDR_FMT " => " ADDR_FMT " | %s => %s\n", i, ADDR_ARG(src), ADDR_ARG(dst), src_name, dst_name);
   }
 }
 
 
-static call_t *callstack_push(segoff_t src, segoff_t dst, size_t *_depth)
+static call_t *callstack_push(addr_t src, addr_t dst, size_t *_depth)
 {
   if (c->call_idx >= ARRAY_SIZE(c->call_stack)) {
     hydra_callstack_dump();
@@ -120,23 +120,23 @@ static call_t *callstack_pop(size_t *_depth)
   return &c->call_stack[depth - 1];
 }
 
-static void callstack_enter(const char *type, hooklib_machine_registers_t *registers, segoff_t _from)
+static void callstack_enter(const char *type, hooklib_machine_registers_t *registers, addr_t _from)
 {
-  segoff_t cur = {registers->cs, registers->ip};
+  addr_t cur = {registers->cs, registers->ip};
   size_t depth = 0;
   call_t *call = callstack_push(_from, cur, &depth);
 
   if (!ENABLE_DEBUG_CALLSTACK) return;
 
   // Adjust all the addresses for the base load segment
-  segoff_t from = segoff_relative_to_segment(_from, CODE_START_SEG);
-  segoff_t to = segoff_relative_to_segment(cur, CODE_START_SEG);
+  addr_t from = addr_relative_to_segment(_from, CODE_START_SEG);
+  addr_t to = addr_relative_to_segment(cur, CODE_START_SEG);
 
   // Emit!
   for (size_t i = 0; i < depth; i++) printf("  ");
 
-  printf(SEGOFF_FMT " => " SEGOFF_FMT " | %s",
-         SEGOFF_ARG(from), SEGOFF_ARG(to), type);
+  printf(ADDR_FMT " => " ADDR_FMT " | %s",
+         ADDR_ARG(from), ADDR_ARG(to), type);
 
   const char *from_name = hydra_function_name(from);
   const char *to_name = hydra_function_name(to);
@@ -158,24 +158,24 @@ static void callstack_enter(const char *type, hooklib_machine_registers_t *regis
 
 static void callstack_leave(const char *type, hooklib_machine_registers_t *registers)
 {
-  segoff_t cur = {registers->cs, registers->ip};
+  addr_t cur = {registers->cs, registers->ip};
 
   size_t depth = 0;
   call_t *call = callstack_pop(&depth);
 
   // Adjust all the addresses for the base load segment
-  segoff_t from = segoff_relative_to_segment(c->last_code, CODE_START_SEG);
-  segoff_t to = segoff_relative_to_segment(cur, CODE_START_SEG);
-  segoff_t src = {};
+  addr_t from = addr_relative_to_segment(c->last_code, CODE_START_SEG);
+  addr_t to = addr_relative_to_segment(cur, CODE_START_SEG);
+  addr_t src = {};
   bool unexpected_return = false;
   if (call) {
-    src = segoff_relative_to_segment(call->src, CODE_START_SEG);
+    src = addr_relative_to_segment(call->src, CODE_START_SEG);
     unexpected_return = (to.seg - src.seg != 0 || to.off - src.off > 5);
   }
 
   if (unexpected_return) {
-    printf("WARN: Unexpected return location, expected " SEGOFF_FMT " but got " SEGOFF_FMT "\n",
-           SEGOFF_ARG(to), SEGOFF_ARG(src));
+    printf("WARN: Unexpected return location, expected " ADDR_FMT " but got " ADDR_FMT "\n",
+           ADDR_ARG(to), ADDR_ARG(src));
   }
 
   if (!ENABLE_DEBUG_CALLSTACK) return;
@@ -183,8 +183,8 @@ static void callstack_leave(const char *type, hooklib_machine_registers_t *regis
   // Emit!
   for (size_t i = 0; i < depth; i++) printf("  ");
 
-  printf(SEGOFF_FMT " <= " SEGOFF_FMT " | %s",
-         SEGOFF_ARG(to), SEGOFF_ARG(from), type);
+  printf(ADDR_FMT " <= " ADDR_FMT " | %s",
+         ADDR_ARG(to), ADDR_ARG(from), type);
 
   const char *from_name = hydra_function_name(from);
   const char *to_name = hydra_function_name(to);
@@ -202,7 +202,7 @@ static void callstack_leave(const char *type, hooklib_machine_registers_t *regis
     printf(" (UNDERFLOW)");
   }
   if (unexpected_return) {
-    printf(" (UNEXPECTED LOC: expected [" SEGOFF_FMT "])", SEGOFF_ARG(src));
+    printf(" (UNEXPECTED LOC: expected [" ADDR_FMT "])", ADDR_ARG(src));
   }
   printf("\n");
 
@@ -259,11 +259,11 @@ static void update(hooklib_machine_t *m, size_t interrupt_count)
   // Report interrupts
   if (interrupt_count != c->last_interrupt_count) {
     if (m->registers->cs != 0xc000 && m->registers->cs != 0xf000) {
-      segoff_t cur = {m->registers->cs - CODE_START_SEG, m->registers->ip};
-      segoff_t stack_ptr = {m->registers->ss, m->registers->sp};
-      segoff_t src = {m->hardware->mem_read16(m->hardware->ctx, segoff_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, segoff_abs(stack_ptr))};
-      src = segoff_relative_to_segment(src, CODE_START_SEG);
-      if (ENABLE_DEBUG_CALLSTACK) printf("INTERRUPT to " SEGOFF_FMT "(src: " SEGOFF_FMT ")\n", SEGOFF_ARG(cur), SEGOFF_ARG(src));
+      addr_t cur = {m->registers->cs - CODE_START_SEG, m->registers->ip};
+      addr_t stack_ptr = {m->registers->ss, m->registers->sp};
+      addr_t src = {m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr))};
+      src = addr_relative_to_segment(src, CODE_START_SEG);
+      if (ENABLE_DEBUG_CALLSTACK) printf("INTERRUPT to " ADDR_FMT "(src: " ADDR_FMT ")\n", ADDR_ARG(cur), ADDR_ARG(src));
     }
     c->last_interrupt_count = interrupt_count;
     c->call_event = CALL_EVENT_NONE; // Interrupt happened before any call/ret could exec
@@ -274,8 +274,8 @@ static void update(hooklib_machine_t *m, size_t interrupt_count)
     handler_t *h = &handlers[i];
     if (m->registers->cs == h->seg + CODE_START_SEG && m->registers->ip == h->off) {
       // Found! Pull the save return address from the satck and "enter"
-      segoff_t stack_ptr = {m->registers->ss, m->registers->sp};
-      segoff_t src = {m->hardware->mem_read16(m->hardware->ctx, segoff_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, segoff_abs(stack_ptr))};
+      addr_t stack_ptr = {m->registers->ss, m->registers->sp};
+      addr_t src = {m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr))};
       callstack_enter(h->name, m->registers, src);
       //callstack_enter(h->name, m->registers, c->last_code);
       break;
@@ -287,7 +287,7 @@ static void update(hooklib_machine_t *m, size_t interrupt_count)
 
   // Ignore certain addrs
   for (size_t i = 0; i < ARRAY_SIZE(ignore_addrs); i++) {
-    segoff_t *s = &ignore_addrs[i];
+    addr_t *s = &ignore_addrs[i];
     if (m->registers->cs == s->seg + CODE_START_SEG && m->registers->ip == s->off) {
       return;
     }
@@ -295,7 +295,7 @@ static void update(hooklib_machine_t *m, size_t interrupt_count)
 
   // Special jump ret locations
   for (size_t i = 0; i < ARRAY_SIZE(ignore_addrs); i++) {
-    segoff_t *s = &jmp_ret[i];
+    addr_t *s = &jmp_ret[i];
     if (m->registers->cs == s->seg + CODE_START_SEG && m->registers->ip == s->off) {
       c->call_event = CALL_EVENT_JMP_RET;
     }

@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include "header.h"
-#include "segoff.h"
+#include "addr.h"
 #include "conf.h"
 #include "hooks.h"
 #include "machine.h"

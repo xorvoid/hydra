@@ -8,7 +8,7 @@ SRC = [
   'datasection.c',
   'exec.c',
   'machine.c',
-  'segoff.c',
+  'addr.c',
 ]
 
 libhydra = shared_library(

@@ -9,7 +9,7 @@ void hydra_hook_register(hydra_hook_t ent)
   hooks[num_hooks++] = ent;
 }
 
-hydra_hook_t * hydra_hook_find(segoff_t addr)
+hydra_hook_t * hydra_hook_find(addr_t addr)
 {
   for (size_t i = 0; i < num_hooks; i++) {
     hydra_hook_t *ent = &hooks[i];

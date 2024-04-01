@@ -104,7 +104,7 @@ void hydra_impl_call_far_indirect(u32 addr)
 // FIXME
 /* void hydra_impl_call_func(const char *name) */
 /* { */
-/*   segoff_t addr = {}; */
+/*   addr_t addr = {}; */
 /*   if (!function_addr(name, &addr)) FAIL("Failed to find function to call: %s", name); */
 /*   hydra_impl_call_far(addr.seg, addr.off); */
 /* } */
@@ -204,17 +204,17 @@ uint32_t hydra_impl_ptr_to_flataddr(hooklib_machine_t *m, void *_ptr)
   uint32_t max_addr = 0x9f000;
   uint8_t * min_ptr = m->hardware->mem_hostaddr(m->hardware->ctx, min_addr);
   uint8_t * max_ptr = min_ptr - min_addr + max_addr;
-  if (!(min_ptr <= ptr && ptr < max_ptr)) FAIL("Invalid pointer in PTR_TO_SEGOFF: %p\n", ptr);
+  if (!(min_ptr <= ptr && ptr < max_ptr)) FAIL("Invalid pointer in PTR_TO_ADDR: %p\n", ptr);
 
   return min_addr + (ptr - min_ptr);
 }
 
-segoff_t hydra_impl_ptr_to_segoff(hooklib_machine_t *m, void *ptr)
+addr_t hydra_impl_ptr_to_addr(hooklib_machine_t *m, void *ptr)
 {
   uint32_t addr = hydra_impl_ptr_to_flataddr(m, ptr);
   assert(addr <= 1<<20);
 
-  segoff_t ret = {addr>>4, addr&15};
+  addr_t ret = {addr>>4, addr&15};
   return ret;
 }
 
@@ -235,6 +235,6 @@ uint16_t hydra_impl_ptr_to_off(hooklib_machine_t *m, void *ptr, uint16_t seg)
 
 uint32_t hydra_impl_ptr_to_32(hooklib_machine_t *m, void *ptr)
 {
-  segoff_t s = hydra_impl_ptr_to_segoff(m, ptr);
+  addr_t s = hydra_impl_ptr_to_addr(m, ptr);
   return (uint32_t)s.seg << 16 | s.off;
 }

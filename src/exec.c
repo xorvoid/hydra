@@ -181,7 +181,7 @@ int hydra_exec_run(hooklib_machine_t *m)
 
   // Begin a new hook?
   if (!resumed) {
-    segoff_t s = {
+    addr_t s = {
       .seg = m->registers->cs,
       .off = m->registers->ip,
     };

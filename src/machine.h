@@ -1,5 +1,5 @@
 #pragma once
-#include "segoff.h"
+#include "addr.h"
 #include "typecheck.h"
 
 /* Macros to be able to decompile to 8086-like C and compile it all into
@@ -186,11 +186,11 @@
 #define UPPER(_u32) ({ STATIC_ASSERT_U32(_u32); (u16)((_u32) >> 16); })
 #define LOWER(_u32) ({ STATIC_ASSERT_U32(_u32); (u16)((_u32)); })
 
-#define PTR_TO_SEGOFF(_ptr) hydra_impl_ptr_to_segoff(m, (_ptr))
+#define PTR_TO_ADDR(_ptr) hydra_impl_ptr_to_addr(m, (_ptr))
 #define PTR_TO_OFF(_ptr, seg) hydra_impl_ptr_to_off(m, (_ptr), (seg))
 #define PTR_TO_32(_ptr) hydra_impl_ptr_to_32(m, (_ptr))
 
-#define PTR_TO_ARGS(ptr) PTR_TO_SEGOFF(ptr).off, PTR_TO_SEGOFF(ptr).seg
+#define PTR_TO_ARGS(ptr) PTR_TO_ADDR(ptr).off, PTR_TO_ADDR(ptr).seg
 #define U32_TO_ARGS(_u32) LOWER(_u32), UPPER(_u32)
 
 #define UNKNOWN() hydra_impl_unknown(__FUNCTION__, __LINE__)
@@ -206,6 +206,6 @@ void     hydra_impl_sti(void);
 u8       hydra_impl_inb(u16 port);
 void     hydra_impl_outb(u16 port, u8 val);
 void     hydra_impl_nop(void);
-segoff_t hydra_impl_ptr_to_segoff(hooklib_machine_t *m, void *ptr);
+addr_t   hydra_impl_ptr_to_addr(hooklib_machine_t *m, void *ptr);
 u16      hydra_impl_ptr_to_off(hooklib_machine_t *m, void *ptr, u16 seg);
 u32      hydra_impl_ptr_to_32(hooklib_machine_t *m, void *ptr);
