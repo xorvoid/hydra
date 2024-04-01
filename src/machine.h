@@ -193,17 +193,14 @@
 #define PTR_TO_ARGS(ptr) PTR_TO_ADDR(ptr).off, PTR_TO_ADDR(ptr).seg
 #define U32_TO_ARGS(_u32) LOWER(_u32), UPPER(_u32)
 
-// JUMP TO WHERE A NEAR OR FAR RET IS (LOL)
-// FOR SOME REASON WE CAN SEEM TO IMPL IT DIRECTLY.. MAYBE DOSBOX-X GETS CONFUSED?
-// AT ANY RATE THOUGH.. WE CAN JUST JUMP TO THE INSTRUCTION WE WANT AND LET IT EXECUTE!
-#define RETURN_FAR() return HYDRA_RESULT_JUMP(0xb48, 0x01)  /* a far return is at this location in the binary */
 
-#define RETURN_FAR_N(n) ({                      \
+#define RETURN_FAR()  return HYDRA_RESULT_RET_FAR()
+#define RETURN_NEAR() return HYDRA_RESULT_RET_NEAR()
+
+#define RETURN_FAR_N(n) ({\
   REMOVE_ARGS_FAR(n); \
   RETURN_FAR(); \
 })
-
-#define RETURN_NEAR() return HYDRA_RESULT_RET_NEAR()
 
 #define UNKNOWN() hydra_impl_unknown(__FUNCTION__, __LINE__)
 

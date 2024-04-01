@@ -10,7 +10,7 @@ enum {
   HYDRA_RESULT_TYPE_CALL,
   HYDRA_RESULT_TYPE_CALL_NEAR,
   HYDRA_RESULT_TYPE_RET_NEAR,
-  /* HYDRA_RESULT_TYPE_RET_FAR, */
+  HYDRA_RESULT_TYPE_RET_FAR,
 };
 
 typedef struct hydra_result hydra_result_t;
@@ -25,8 +25,7 @@ struct hydra_result
 #define HYDRA_RESULT_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
 #define HYDRA_RESULT_JUMP_NEAR(off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
 #define HYDRA_RESULT_RET_NEAR()     ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_NEAR, -1, -1}; res; })
-// XXX BROKEN: FIXME
-/* #define HYDRA_RESULT_RET_FAR() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_FAR, -1, -1}; res; }) */
+#define HYDRA_RESULT_RET_FAR()      ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_FAR, -1, -1}; res; })
 
 /* Registration flags */
 enum {

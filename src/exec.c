@@ -228,13 +228,14 @@ int hydra_exec_run(hydra_machine_t *m)
       hydra_callstack_ret(m);
       return 1;
     } break;
-      /* case HYDRA_RESULT_TYPE_RET_FAR: { */
-      /*   u32 top_of_stack = 16 * (u32)cpu->ss + (u32)cpu->sp; */
-      /*   cpu->ip = m->hardware->mem_read16(m, top_of_stack); */
-      /*   cpu->cs = m->hardware->mem_read16(m, top_of_stack+2); */
-      /*   cpu->sp += 4; */
-      /*   return 1; */
-      /* } break; */
+    case HYDRA_RESULT_TYPE_RET_FAR: {
+      u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
+      m->registers->ip = m->hardware->mem_read16(m->hardware->ctx, addr + 0);
+      m->registers->cs = m->hardware->mem_read16(m->hardware->ctx, addr + 2);
+      m->registers->sp += 4;
+      hydra_callstack_ret(m);
+      return 1;
+    } break;
     default:
       FAIL("UNKNOWN HOOK RESULT TYPE: %d", result.type);
   }
