@@ -14,7 +14,7 @@ enum {
 
 struct hydra_result
 {
-  int type;
+  int      type;    /* HYDRA_RESULT_TYPE_* */
   uint16_t new_cs;
   uint16_t new_ip;
 };
@@ -32,6 +32,7 @@ struct hydra_hook
 
 void hydra_hook_register(hydra_hook_t entry);
 hydra_hook_t * hydra_hook_find(addr_t addr);
+hydra_result_t hydra_hook_dead(hydra_machine_t *m);
 
 // OLD
 #define HOOK_REGISTER(func, seg, off, flags) do {  \
@@ -49,19 +50,18 @@ hydra_hook_t * hydra_hook_find(addr_t addr);
   hydra_hook_register(ent);                      \
 } while(0)
 
-hydra_result_t H_DEAD(hydra_machine_t *m);
-#define HOOK_DEAD(func, seg, off, flags) HOOK_REGISTER(H_DEAD, seg, off, flags)
+#define HOOK_DEAD(func, seg, off, flags) HOOK_REGISTER(hydra_hook_dead, seg, off, flags)
 
 #define HOOK_FUNC(name) hydra_result_t name(hydra_machine_t *m)
 
-#define HOOK_RESUME() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RESUME, -1, -1}; res; })
-#define HOOK_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
-#define HOOK_JUMP_NEAR(off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
+#define HYDRA_RESUME() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RESUME, -1, -1}; res; })
+#define HYDRA_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
+#define HYDRA_JUMP_NEAR(off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
 
 // JUMP TO WHERE A NEAR OR FAR RET IS (LOL)
 // FOR SOME REASON WE CAN SEEM TO IMPL IT DIRECTLY.. MAYBE DOSBOX-X GETS CONFUSED?
 // AT ANY RATE THOUGH.. WE CAN JUST JUMP TO THE INSTRUCTION WE WANT AND LET IT EXECUTE!
-#define RETURN_FAR() return HOOK_JUMP(0xb48, 0x01)  /* a far return is at this location in the binary */
+#define RETURN_FAR() return HYDRA_JUMP(0xb48, 0x01)  /* a far return is at this location in the binary */
 #define RETURN_FAR_N(n) ({ \
   REMOVE_ARGS_FAR(n); \
   RETURN_FAR(); \

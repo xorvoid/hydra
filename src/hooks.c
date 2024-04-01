@@ -19,3 +19,11 @@ hydra_hook_t * hydra_hook_find(addr_t addr)
   }
   return NULL;
 }
+
+hydra_result_t hydra_hook_dead(hydra_machine_t *m)
+{
+  hydra_callstack_dump();
+  hydra_cpu_dump(m->registers);
+  FAIL("DEADCOE NOT SO DEAD at CS: %x IP: %x", m->registers->cs, m->registers->ip);
+  return HYDRA_RESUME();
+}

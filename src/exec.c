@@ -102,7 +102,7 @@ static hydra_result_t run_begin(hydra_hook_t *hook, hydra_machine_t *m)
     // "int 0x3f" is encoded as "cd 3f"
     if (0 == memcmp(mem, "\xcd\x3f", 2)) {
       printf("Call to %04x:%04x but it's not paged in.. waiting..\n", m->registers->cs - CODE_START_SEG, m->registers->ip);
-      return HOOK_RESUME();
+      return HYDRA_RESUME();
     }
 
     if (mem[0] != 0xea) {
@@ -171,7 +171,7 @@ void hydra_exec_init(hydra_machine_hardware_t *hw, hydra_machine_audio_t *audio)
 
 int hydra_exec_run(hydra_machine_t *m)
 {
-  hydra_result_t result = HOOK_RESUME();
+  hydra_result_t result = HYDRA_RESUME();
 
   /* printf("Hook run | CS:IP = %04x:%04x\n", */
   /*        m->registers->cs - CODE_START_SEG, m->registers->ip); */
