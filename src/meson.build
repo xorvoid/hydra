@@ -1,7 +1,7 @@
 
 SRC = [
   'conf.c',
-  'hooklib.c',
+  'api_impl.c',
   'hooks.c',
   'callstack.c',
   'functions.c',
@@ -13,5 +13,4 @@ SRC = [
 
 libhydra = shared_library(
   'hydra', SRC,
-  #dependencies: dosbox_hooklib_dep,
 )

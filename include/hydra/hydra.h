@@ -1,10 +1,11 @@
 #pragma once
 #include <stdint.h>
 
+#include "../../src/dosbox-x/include/export/dosbox-x/hydra_machine.h"
+
 #include "../../src/typedefs.h"
 #include "../../src/addr.h"
 #include "../../src/conf.h"
-#include "../../src/hooklib.h"
 #include "../../src/hooks.h"
 #include "../../src/machine.h"
 #include "../../src/functions.h"
