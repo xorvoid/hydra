@@ -5,7 +5,7 @@
 /* Macros to be able to decompile to 8086-like C and compile it all into
    working code. Goal is then to re-write to more sane C */
 
-#define MACHINE hooklib_machine_t *m
+#define MACHINE hydra_machine_t *m
 
 #define AX ((m)->registers->ax)
 #define BX ((m)->registers->bx)
@@ -206,6 +206,6 @@ void     hydra_impl_sti(void);
 u8       hydra_impl_inb(u16 port);
 void     hydra_impl_outb(u16 port, u8 val);
 void     hydra_impl_nop(void);
-addr_t   hydra_impl_ptr_to_addr(hooklib_machine_t *m, void *ptr);
-u16      hydra_impl_ptr_to_off(hooklib_machine_t *m, void *ptr, u16 seg);
-u32      hydra_impl_ptr_to_32(hooklib_machine_t *m, void *ptr);
+addr_t   hydra_impl_ptr_to_addr(hydra_machine_t *m, void *ptr);
+u16      hydra_impl_ptr_to_off(hydra_machine_t *m, void *ptr, u16 seg);
+u32      hydra_impl_ptr_to_32(hydra_machine_t *m, void *ptr);

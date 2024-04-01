@@ -69,7 +69,7 @@ static void execution_release(hydra_exec_ctx_t *exec)
   exec->state = HYDRA_EXEC_STATE_IDLE;
 }
 
-static hydra_result_t run_wait(hydra_exec_ctx_t *exec, hooklib_machine_t *m)
+static hydra_result_t run_wait(hydra_exec_ctx_t *exec, hydra_machine_t *m)
 {
   int ret = pthread_cond_wait(exec->cond_main, exec->mutex);
   if (ret != 0) FAIL("Failed to cond wait");
@@ -87,7 +87,7 @@ static hydra_result_t run_wait(hydra_exec_ctx_t *exec, hooklib_machine_t *m)
   return result;
 }
 
-static hydra_result_t run_begin(hydra_hook_t *hook, hooklib_machine_t *m)
+static hydra_result_t run_begin(hydra_hook_t *hook, hydra_machine_t *m)
 {
   if (hook->flags & HYDRA_HOOK_FLAGS_OVERLAY) {
     // On first entry to the overlay, it calls an interrupt "int 0x3f"
@@ -132,7 +132,7 @@ static hydra_result_t run_begin(hydra_hook_t *hook, hooklib_machine_t *m)
   return run_wait(exec, m);
 }
 
-static hydra_result_t run_continue(hooklib_machine_t *m, hydra_exec_ctx_t *exec)
+static hydra_result_t run_continue(hydra_machine_t *m, hydra_exec_ctx_t *exec)
 {
   assert(exec->state == HYDRA_EXEC_STATE_ACTIVE);
 
@@ -144,7 +144,7 @@ static hydra_result_t run_continue(hooklib_machine_t *m, hydra_exec_ctx_t *exec)
   return run_wait(exec, m);
 }
 
-static bool try_resume(hooklib_machine_t *m, hydra_result_t *_result)
+static bool try_resume(hydra_machine_t *m, hydra_result_t *_result)
 {
   // Resume a retf ?
   if (m->registers->cs == 0xffff) {
@@ -165,11 +165,11 @@ static bool try_resume(hooklib_machine_t *m, hydra_result_t *_result)
   return false;
 }
 
-void hydra_exec_init(hooklib_machine_hardware_t *hw, hooklib_audio_t *audio)
+void hydra_exec_init(hydra_machine_hardware_t *hw, hydra_machine_audio_t *audio)
 {
 }
 
-int hydra_exec_run(hooklib_machine_t *m)
+int hydra_exec_run(hydra_machine_t *m)
 {
   hydra_result_t result = HOOK_RESUME();
 

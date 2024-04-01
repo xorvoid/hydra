@@ -120,7 +120,7 @@ static call_t *callstack_pop(size_t *_depth)
   return &c->call_stack[depth - 1];
 }
 
-static void callstack_enter(const char *type, hooklib_machine_registers_t *registers, addr_t _from)
+static void callstack_enter(const char *type, hydra_machine_registers_t *registers, addr_t _from)
 {
   addr_t cur = {registers->cs, registers->ip};
   size_t depth = 0;
@@ -156,7 +156,7 @@ static void callstack_enter(const char *type, hooklib_machine_registers_t *regis
   /* } */
 }
 
-static void callstack_leave(const char *type, hooklib_machine_registers_t *registers)
+static void callstack_leave(const char *type, hydra_machine_registers_t *registers)
 {
   addr_t cur = {registers->cs, registers->ip};
 
@@ -211,7 +211,7 @@ static void callstack_leave(const char *type, hooklib_machine_registers_t *regis
   /* } */
 }
 
-static u32 skip_prefixes(hooklib_machine_t *m)
+static u32 skip_prefixes(hydra_machine_t *m)
 {
   u32 addr = m->registers->cs*16 + m->registers->ip;
   while (1) {
@@ -225,7 +225,7 @@ static u32 skip_prefixes(hooklib_machine_t *m)
   }
 }
 
-static bool is_instr_call(hooklib_machine_t *m)
+static bool is_instr_call(hydra_machine_t *m)
 {
   u32 addr = skip_prefixes(m);
   u8  op   = m->hardware->mem_read8(m->hardware->ctx, addr);
@@ -239,7 +239,7 @@ static bool is_instr_call(hooklib_machine_t *m)
   return false;
 }
 
-static bool is_instr_ret(hooklib_machine_t *m)
+static bool is_instr_ret(hydra_machine_t *m)
 {
   u32 addr = skip_prefixes(m);
   u8  op   = m->hardware->mem_read8(m->hardware->ctx, addr);
@@ -254,7 +254,7 @@ static bool is_instr_ret(hooklib_machine_t *m)
   return false;
 }
 
-static void update(hooklib_machine_t *m, size_t interrupt_count)
+static void update(hydra_machine_t *m, size_t interrupt_count)
 {
   // Report interrupts
   if (interrupt_count != c->last_interrupt_count) {
@@ -306,7 +306,7 @@ static void update(hooklib_machine_t *m, size_t interrupt_count)
   if (is_instr_ret(m))   c->call_event = CALL_EVENT_RET;
 }
 
-void hydra_callstack_notify(hooklib_machine_t *m)
+void hydra_callstack_notify(hydra_machine_t *m)
 {
   // Handle call event actions that are defered from previous instr
   // because we need post-execution information
@@ -330,14 +330,14 @@ void hydra_callstack_notify(hooklib_machine_t *m)
   c->last_code.off = m->registers->ip;
 }
 
-void hydra_callstack_track(hooklib_machine_t *m, size_t interrupt_count)
+void hydra_callstack_track(hydra_machine_t *m, size_t interrupt_count)
 {
   update(m, interrupt_count);
   c->last_code.seg = m->registers->cs;
   c->last_code.off = m->registers->ip;
 }
 
-void hydra_callstack_ret(hooklib_machine_t *m)
+void hydra_callstack_ret(hydra_machine_t *m)
 {
   assert(c->call_event == CALL_EVENT_NONE);
   c->call_event = CALL_EVENT_RET;

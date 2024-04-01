@@ -13,7 +13,7 @@ void hydra_impl_call_far(u16 seg, u16 off)
   hydra_exec_ctx_t *exec = execution_context_get(&exec_id);
 
   // Save a return reference to this executor on the 8086 stack
-  hooklib_machine_t *m = &exec->machine;
+  hydra_machine_t *m = &exec->machine;
   u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
   m->hardware->mem_write16(m->hardware->ctx, addr - 2, 0xffff);
   m->hardware->mem_write16(m->hardware->ctx, addr - 4, exec_id);
@@ -54,7 +54,7 @@ void hydra_impl_call_near(u16 off)
   assert(exec_id <= 255);
 
   // Save a return reference to this executor on the 8086 stack
-  hooklib_machine_t *m = &exec->machine;
+  hydra_machine_t *m = &exec->machine;
   u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
   m->hardware->mem_write16(m->hardware->ctx, addr - 2, 0xff00 + exec_id);
   m->registers->sp -= 2;
@@ -123,7 +123,7 @@ void hydra_impl_raw_code(u8 *code, size_t code_sz)
   assert(code_sz <= MAX_RAW_CODE);
 
   hydra_exec_ctx_t *exec = execution_context_get(NULL);
-  hooklib_machine_t *m = &exec->machine;
+  hydra_machine_t *m = &exec->machine;
 
   u8   code_saved[MAX_RAW_CODE];
   u16  code_seg  = CODE_START_SEG;
@@ -161,7 +161,7 @@ void hydra_impl_sti(void)
 u8 hydra_impl_inb(u16 port)
 {
   hydra_exec_ctx_t *exec = execution_context_get(NULL);
-  hooklib_machine_t *m = &exec->machine;
+  hydra_machine_t *m = &exec->machine;
 
   u8 save_ax = m->registers->ax;
   u8 save_dx = m->registers->dx;
@@ -181,7 +181,7 @@ u8 hydra_impl_inb(u16 port)
 void hydra_impl_outb(u16 port, u8 val)
 {
   hydra_exec_ctx_t *exec = execution_context_get(NULL);
-  hooklib_machine_t *m = &exec->machine;
+  hydra_machine_t *m = &exec->machine;
 
   u8 save_ax = m->registers->ax;
   u8 save_dx = m->registers->dx;
@@ -196,7 +196,7 @@ void hydra_impl_outb(u16 port, u8 val)
   m->registers->dx = save_dx;
 }
 
-uint32_t hydra_impl_ptr_to_flataddr(hooklib_machine_t *m, void *_ptr)
+uint32_t hydra_impl_ptr_to_flataddr(hydra_machine_t *m, void *_ptr)
 {
   uint8_t * ptr = (uint8_t*)_ptr;
 
@@ -209,7 +209,7 @@ uint32_t hydra_impl_ptr_to_flataddr(hooklib_machine_t *m, void *_ptr)
   return min_addr + (ptr - min_ptr);
 }
 
-addr_t hydra_impl_ptr_to_addr(hooklib_machine_t *m, void *ptr)
+addr_t hydra_impl_ptr_to_addr(hydra_machine_t *m, void *ptr)
 {
   uint32_t addr = hydra_impl_ptr_to_flataddr(m, ptr);
   assert(addr <= 1<<20);
@@ -218,7 +218,7 @@ addr_t hydra_impl_ptr_to_addr(hooklib_machine_t *m, void *ptr)
   return ret;
 }
 
-uint16_t hydra_impl_ptr_to_off(hooklib_machine_t *m, void *ptr, uint16_t seg)
+uint16_t hydra_impl_ptr_to_off(hydra_machine_t *m, void *ptr, uint16_t seg)
 {
   uint32_t addr = hydra_impl_ptr_to_flataddr(m, ptr);
   assert(addr <= 1<<20);
@@ -233,7 +233,7 @@ uint16_t hydra_impl_ptr_to_off(hooklib_machine_t *m, void *ptr, uint16_t seg)
   return (uint16_t)(addr - seg_start);
 }
 
-uint32_t hydra_impl_ptr_to_32(hooklib_machine_t *m, void *ptr)
+uint32_t hydra_impl_ptr_to_32(hydra_machine_t *m, void *ptr)
 {
   addr_t s = hydra_impl_ptr_to_addr(m, ptr);
   return (uint32_t)s.seg << 16 | s.off;

@@ -25,7 +25,7 @@ enum {
 
 struct hydra_hook
 {
-  hydra_result_t (*func)(hooklib_machine_t *);
+  hydra_result_t (*func)(hydra_machine_t *);
   uint16_t hook_cs, hook_ip;
   int flags;
 };
@@ -42,17 +42,17 @@ hydra_hook_t * hydra_hook_find(addr_t addr);
 // NEW
 #define HOOK_REG(name, flags) do {  \
     const char *f_name = "F_" #name; \
-    hydra_result_t (*h_func)(hooklib_machine_t *) = H_ ## name; \
+    hydra_result_t (*h_func)(hydra_machine_t *) = H_ ## name; \
     const hydra_function_def_t *def = hydra_function_find(f_name);                      \
     if (!def) FAIL("Cannot find function '%s' to register", f_name); \
     hydra_hook_t ent = {h_func, def->addr.seg, def->addr.off, (flags)}; \
   hydra_hook_register(ent);                      \
 } while(0)
 
-hydra_result_t H_DEAD(hooklib_machine_t *m);
+hydra_result_t H_DEAD(hydra_machine_t *m);
 #define HOOK_DEAD(func, seg, off, flags) HOOK_REGISTER(H_DEAD, seg, off, flags)
 
-#define HOOK_FUNC(name) hydra_result_t name(hooklib_machine_t *m)
+#define HOOK_FUNC(name) hydra_result_t name(hydra_machine_t *m)
 
 #define HOOK_RESUME() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RESUME, -1, -1}; res; })
 #define HOOK_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
@@ -75,4 +75,4 @@ hydra_result_t H_DEAD(hooklib_machine_t *m);
 #define RETURN_NEAR() return HOOK_RET_NEAR()
 
 // TODO: MOVE THIS SOMEWHERE BETTER?
-void hydra_cpu_dump(hooklib_machine_registers_t *cpu);
+void hydra_cpu_dump(hydra_machine_registers_t *cpu);

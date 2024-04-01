@@ -1,7 +1,7 @@
 #include "internal.h"
 #include <dlfcn.h>
 
-void hydra_cpu_dump(hooklib_machine_registers_t *cpu)
+void hydra_cpu_dump(hydra_machine_registers_t *cpu)
 {
   printf("CPU STATE:\n");
   printf("  AX: %04x  BX: %04x  CX: %04x  DX: %04x\n", cpu->ax, cpu->bx, cpu->cx, cpu->dx);
@@ -11,14 +11,14 @@ void hydra_cpu_dump(hooklib_machine_registers_t *cpu)
 }
 
 
-HOOKLIB_INIT_FUNC(hooklib_init)
+HYDRA_MACHINE_INIT_FUNC(hydra_machine_init)
 {
   hydra_function_metadata_init();
   hydra_callstack_init();
   hydra_exec_init(hw, audio);
 
   // User init
-  void (*hydra_user_init)(hydra_conf_t *conf, hooklib_machine_hardware_t *hw, hooklib_audio_t *audio) = NULL;
+  void (*hydra_user_init)(hydra_conf_t *conf, hydra_machine_hardware_t *hw, hydra_machine_audio_t *audio) = NULL;
   *(void**)&hydra_user_init = dlsym(RTLD_DEFAULT, "hydra_user_init");
   if (!hydra_user_init) FAIL("Failed to find user init function: hydra_user_init()");
 
@@ -33,7 +33,7 @@ HOOKLIB_INIT_FUNC(hooklib_init)
   hydra_datasection_baseptr_set(ptr);
 }
 
-HOOKLIB_EXEC_FUNC(hooklib_exec)
+HYDRA_MACHINE_EXEC_FUNC(hydra_machine_exec)
 {
   if (m->registers->cs != 0xffff) {
     hydra_callstack_track(m, interrupt_count);
@@ -41,7 +41,7 @@ HOOKLIB_EXEC_FUNC(hooklib_exec)
   return hydra_exec_run(m);
 }
 
-HOOKLIB_NOTIFY_FUNC(hooklib_notify)
+HYDRA_MACHINE_NOTIFY_FUNC(hydra_machine_notify)
 {
   hydra_callstack_notify(m);
 }

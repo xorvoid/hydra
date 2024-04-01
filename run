@@ -20,4 +20,4 @@ conf=$THISDIR/conf/dosbox.conf
 cd $mount_d
 
 ## Run it!
-$dosbox -conf "$conf" -hooklib "$libhydrauser" -c "mount d $mount_d"  -c "D:" -c "$exec_cmd" -c "exit"
+$dosbox -conf "$conf" -hydra "$libhydrauser" -c "mount d $mount_d"  -c "D:" -c "$exec_cmd" -c "exit"
