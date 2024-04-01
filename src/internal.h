@@ -4,15 +4,22 @@
 #include <pthread.h>
 #include "header.h"
 #include "segoff.h"
+#include "conf.h"
 #include "hooks.h"
 #include "machine.h"
 #include "functions.h"
 
 // FIXME: REMOVE THIS HARDCODING
-#define CODE_START_SEG ((u16)0x823)
+//#define CODE_START_SEG ((u16)0x823)
 
 #define ENABLE_DEBUG_CALLSTACK 0
 #define MAX_HOOKS 2048
+
+/********************************************************************/
+/* conf.c */
+
+extern hydra_conf_t HYDRA_CONF[1];
+#define CODE_START_SEG (HYDRA_CONF->code_load_offset)
 
 /********************************************************************/
 /* exec.c */
@@ -56,3 +63,9 @@ void hydra_callstack_dump(void);
 void hydra_callstack_notify(hooklib_machine_t *m);
 void hydra_callstack_track(hooklib_machine_t *m, size_t interrupt_count);
 void hydra_callstack_ret(hooklib_machine_t *m);
+
+/********************************************************************/
+/* datasection.c */
+
+u8 * hydra_datasection_baseptr(void);
+void hydra_datasection_baseptr_set(u8 *ptr);

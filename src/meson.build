@@ -1,5 +1,6 @@
 
 SRC = [
+  'conf.c',
   'hooklib.c',
   'hooks.c',
   'callstack.c',

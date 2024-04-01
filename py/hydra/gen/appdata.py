@@ -61,7 +61,7 @@ def gen_src(data, out=None):
     f = sys.stdout if not out else out
     def emit(s): print(s, file=f)
 
-    emit('#include "appdata.h"')
+    emit('#include "hydra_user_appdata.h"')
     emit('')
     emit('/**************************************************************************************************************/')
     emit('/* Generate Function Metdata */')
