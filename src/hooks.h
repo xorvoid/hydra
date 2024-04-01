@@ -42,10 +42,3 @@ enum {
 void           hydra_impl_register_addr(hydra_result_t (*func)(hydra_machine_t *m), u16 seg, u16 off, int flags);
 void           hydra_impl_register(const char *name, hydra_result_t (*func)(hydra_machine_t *m), int flags);
 hydra_result_t hydra_impl_dead(hydra_machine_t *m);
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// TODO CLEANUP ALL THIS
-
-
-// TODO: MOVE THIS SOMEWHERE BETTER?
-void hydra_cpu_dump(hydra_machine_registers_t *cpu);

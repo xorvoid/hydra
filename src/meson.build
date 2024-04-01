@@ -9,6 +9,7 @@ SRC = [
   'exec.c',
   'machine.c',
   'addr.c',
+  'dump.c',
 ]
 
 libhydra = shared_library(
