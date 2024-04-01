@@ -9,8 +9,9 @@ def gen_hdr(data, out=None):
 
     emit('#pragma once')
     emit('#include "hydra/hydra.h"')
-    emit('#include "header.h"')
-    emit('#include "structures.h"')
+    emit('#if __has_include ("hydra_user_defs.h")')
+    emit('  #include "hydra_user_defs.h"')
+    emit('#endif')
     emit('')
 
     ## TODO: We no longer need the C X-MACRO style metaprogramming
