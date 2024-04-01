@@ -139,25 +139,18 @@
     } \
   } while(0)
 
-#define CALL_FAR(seg, off) _impl_call_far(seg, off)
-void _impl_call_far(u16 seg, u16 off);
-
-#define CALL_FAR_CS(off) _impl_call_far_cs(CS, off);
-void _impl_call_far_cs(u16 cs_reg_value, u16 off);
+#define CALL_FAR(seg, off) hydra_impl_call_far(seg, off)
+#define CALL_FAR_CS(off) hydra_impl_call_far_cs(CS, off);
 
 #define CALL_FAR_INDIRECT(addr, ...) ({         \
   u16 args[] = {__VA_ARGS__}; \
   PUSH_ARGS(args); \
-  _impl_call_far_indirect(addr); \
+  hydra_impl_call_far_indirect(addr); \
   POP_ARGS(args);                \
   AX; })
-void _impl_call_far_indirect(u32 addr);
 
-#define CALL_NEAR(off) _impl_call_near(off)
-void _impl_call_near(u16 off);
-
-#define CALL_FUNC(name) _impl_call_func(#name)
-void _impl_call_func(const char *name);
+#define CALL_NEAR(off) hydra_impl_call_near(off)
+#define CALL_FUNC(name) hydra_impl_call_func(#name)
 
 #define PUSH_ARGS(args) do { \
     for (size_t i = 0; i < ARRAY_SIZE(args); i++) { PUSH(args[i]); } \
@@ -167,17 +160,11 @@ void _impl_call_func(const char *name);
     for (size_t i = 0; i < ARRAY_SIZE(args); i++) { SP += 2; } \
 } while(0)
 
-#define STI() _impl_sti()
-void _impl_sti(void);
+#define NOP() hydra_impl_nop()
+#define STI() hydra_impl_sti()
 
-#define INB(port) _impl_inb(port);
-u8 _impl_inb(u16 port);
-
-#define OUTB(port, val) _impl_outb(port, val)
-void _impl_outb(u16 port, u8 val);
-
-#define NOP() _impl_nop()
-void _impl_nop(void);
+#define INB(port) hydra_impl_inb(port);
+#define OUTB(port, val) hydra_impl_outb(port, val)
 
 #define FRAME_ENTER(n) ({ PUSH(BP); BP = SP; SP -= n; })
 #define FRAME_LEAVE()  ({ SP = BP; BP = POP(); })
@@ -199,19 +186,26 @@ void _impl_nop(void);
 #define UPPER(_u32) ({ STATIC_ASSERT_U32(_u32); (u16)((_u32) >> 16); })
 #define LOWER(_u32) ({ STATIC_ASSERT_U32(_u32); (u16)((_u32)); })
 
-#define PTR_TO_SEGOFF(_ptr) _impl_ptr_to_segoff(m, (_ptr))
-segoff_t _impl_ptr_to_segoff(hooklib_machine_t *m, void *ptr);
-
-#define PTR_TO_OFF(_ptr, seg) _impl_ptr_to_off(m, (_ptr), (seg))
-u16 _impl_ptr_to_off(hooklib_machine_t *m, void *ptr, u16 seg);
-
-#define PTR_TO_32(_ptr) _impl_ptr_to_32(m, (_ptr))
-u32 _impl_ptr_to_32(hooklib_machine_t *m, void *ptr);
+#define PTR_TO_SEGOFF(_ptr) hydra_impl_ptr_to_segoff(m, (_ptr))
+#define PTR_TO_OFF(_ptr, seg) hydra_impl_ptr_to_off(m, (_ptr), (seg))
+#define PTR_TO_32(_ptr) hydra_impl_ptr_to_32(m, (_ptr))
 
 #define PTR_TO_ARGS(ptr) PTR_TO_SEGOFF(ptr).off, PTR_TO_SEGOFF(ptr).seg
 #define U32_TO_ARGS(_u32) LOWER(_u32), UPPER(_u32)
 
-#define UNKNOWN() do { \
-    fprintf(stderr, "FAIL: UNKNOWN INSTRUCTION: UNIMPL AT %s:%d\n", __FUNCTION__, __LINE__); \
-    abort();                                                            \
-  } while(0)
+#define UNKNOWN() hydra_impl_unknown(__FUNCTION__, __LINE__)
+
+/* Implementations provided "out-of-line" */
+void     hydra_impl_unknown(const char *func, int line);
+void     hydra_impl_call_far(u16 seg, u16 off);
+void     hydra_impl_call_far_cs(u16 cs_reg_value, u16 off);
+void     hydra_impl_call_far_indirect(u32 addr);
+void     hydra_impl_call_near(u16 off);
+void     hydra_impl_call_func(const char *name);
+void     hydra_impl_sti(void);
+u8       hydra_impl_inb(u16 port);
+void     hydra_impl_outb(u16 port, u8 val);
+void     hydra_impl_nop(void);
+segoff_t hydra_impl_ptr_to_segoff(hooklib_machine_t *m, void *ptr);
+u16      hydra_impl_ptr_to_off(hooklib_machine_t *m, void *ptr, u16 seg);
+u32      hydra_impl_ptr_to_32(hooklib_machine_t *m, void *ptr);
