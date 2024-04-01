@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ "$#" != 2 ]; then
+   echo "usage: $0 <libhydrauser> <exe>"
+   exit 1
+fi
+
+libhydrauser=$(realpath $1)
+exe=$(realpath $2)
+
+mount_d=$(dirname $exe)
+exec_cmd=$(basename $exe)
+
+## Compute repo-local paths
+THISDIR=$(dirname $(realpath $0))
+dosbox=$THISDIR/src/dosbox-x/src/dosbox-x
+conf=$THISDIR/conf/dosbox.conf
+
+## Run from the exe mount dir d
+cd $mount_d
+
+## Run it!
+$dosbox -conf "$conf" -hooklib "$libhydrauser" -c "mount d $mount_d"  -c "D:" -c "$exec_cmd" -c "exit"
