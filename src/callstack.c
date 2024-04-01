@@ -82,8 +82,8 @@ void hydra_callstack_dump(void)
     call_t *call = &c->call_stack[i];
     segoff_t src = segoff_relative_to_segment(call->src, CODE_START_SEG);
     segoff_t dst = segoff_relative_to_segment(call->dst, CODE_START_SEG);
-    const char *src_name = function_name(src);
-    const char *dst_name = function_name(dst);
+    const char *src_name = hydra_function_name(src);
+    const char *dst_name = hydra_function_name(dst);
     printf("  %zu  " SEGOFF_FMT " => " SEGOFF_FMT " | %s => %s\n", i, SEGOFF_ARG(src), SEGOFF_ARG(dst), src_name, dst_name);
   }
 }
@@ -138,8 +138,8 @@ static void callstack_enter(const char *type, hooklib_machine_registers_t *regis
   printf(SEGOFF_FMT " => " SEGOFF_FMT " | %s",
          SEGOFF_ARG(from), SEGOFF_ARG(to), type);
 
-  const char *from_name = function_name(from);
-  const char *to_name = function_name(to);
+  const char *from_name = hydra_function_name(from);
+  const char *to_name = hydra_function_name(to);
   if (from_name) {
     printf(" [%s]", from_name);
   }
@@ -186,8 +186,8 @@ static void callstack_leave(const char *type, hooklib_machine_registers_t *regis
   printf(SEGOFF_FMT " <= " SEGOFF_FMT " | %s",
          SEGOFF_ARG(to), SEGOFF_ARG(from), type);
 
-  const char *from_name = function_name(from);
-  const char *to_name = function_name(to);
+  const char *from_name = hydra_function_name(from);
+  const char *to_name = hydra_function_name(to);
   if (to_name) {
     printf(" [%s]", to_name);
   }
