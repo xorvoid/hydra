@@ -20,10 +20,25 @@ hydra_hook_t * hydra_hook_find(addr_t addr)
   return NULL;
 }
 
-hydra_result_t hydra_hook_dead(hydra_machine_t *m)
+void hydra_impl_register_addr(hydra_result_t (*func)(hydra_machine_t *m), u16 seg, u16 off, int flags)
+{
+  hydra_hook_t ent = {func, seg, off, flags};
+  hydra_hook_register(ent);
+}
+
+void hydra_impl_register(const char *name, hydra_result_t (*func)(hydra_machine_t *m), int flags)
+{
+  const hydra_function_def_t *def = hydra_function_find(name);
+  if (!def) FAIL("Cannot find function '%s' to register", name);
+
+  hydra_hook_t ent = {func, def->addr.seg, def->addr.off, flags};
+  hydra_hook_register(ent);
+}
+
+hydra_result_t hydra_impl_dead(hydra_machine_t *m)
 {
   hydra_callstack_dump();
   hydra_cpu_dump(m->registers);
   FAIL("DEADCOE NOT SO DEAD at CS: %x IP: %x", m->registers->cs, m->registers->ip);
-  return HYDRA_RESUME();
+  return HYDRA_RESULT_RESUME();
 }

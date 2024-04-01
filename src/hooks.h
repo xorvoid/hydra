@@ -1,7 +1,8 @@
 
-typedef struct hydra_hook   hydra_hook_t;
-typedef struct hydra_result hydra_result_t;
+/* Hydra function type */
+#define HYDRA_FUNC(name) hydra_result_t name(hydra_machine_t *m)
 
+/* Hydra result: How to resume the x86-16 emulator? */
 enum {
   HYDRA_RESULT_TYPE_RESUME,
   HYDRA_RESULT_TYPE_JUMP,
@@ -12,6 +13,7 @@ enum {
   /* HYDRA_RESULT_TYPE_RET_FAR, */
 };
 
+typedef struct hydra_result hydra_result_t;
 struct hydra_result
 {
   int      type;    /* HYDRA_RESULT_TYPE_* */
@@ -19,60 +21,32 @@ struct hydra_result
   uint16_t new_ip;
 };
 
+#define HYDRA_RESULT_RESUME()       ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RESUME, -1, -1}; res; })
+#define HYDRA_RESULT_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
+#define HYDRA_RESULT_JUMP_NEAR(off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
+#define HYDRA_RESULT_RET_NEAR()     ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_NEAR, -1, -1}; res; })
+// XXX BROKEN: FIXME
+/* #define HYDRA_RESULT_RET_FAR() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_FAR, -1, -1}; res; }) */
+
+/* Registration flags */
 enum {
   HYDRA_HOOK_FLAGS_OVERLAY = 1<<0,
 };
 
-struct hydra_hook
-{
-  hydra_result_t (*func)(hydra_machine_t *);
-  uint16_t hook_cs, hook_ip;
-  int flags;
-};
+/* Registration macros */
+#define HYDRA_REGISTER_ADDR(func, seg, off, flags) hydra_impl_register_addr(func, seg, off, flags)
+#define HYDRA_REGISTER(name, flags) hydra_impl_register("F_" #name, H_ ## name, flags)
+#define HYDRA_DEAD_ADDR(func, seg, off, flags) HYDRA_REGISTER_ADDR(hydra_impl_dead, seg, off, flags)
+#define HYDRA_DEAD(name, flags) hydra_impl_register("F_" #name, hydra_impl_dead, flags)
 
-void hydra_hook_register(hydra_hook_t entry);
-hydra_hook_t * hydra_hook_find(addr_t addr);
-hydra_result_t hydra_hook_dead(hydra_machine_t *m);
+/* Implementations provided "out-of-line" */
+void           hydra_impl_register_addr(hydra_result_t (*func)(hydra_machine_t *m), u16 seg, u16 off, int flags);
+void           hydra_impl_register(const char *name, hydra_result_t (*func)(hydra_machine_t *m), int flags);
+hydra_result_t hydra_impl_dead(hydra_machine_t *m);
 
-// OLD
-#define HOOK_REGISTER(func, seg, off, flags) do {  \
-  hydra_hook_t ent = {(func), (seg), (off), (flags)}; \
-  hydra_hook_register(ent); \
-} while(0)
+////////////////////////////////////////////////////////////////////////////////////////////
+// TODO CLEANUP ALL THIS
 
-// NEW
-#define HOOK_REG(name, flags) do {  \
-    const char *f_name = "F_" #name; \
-    hydra_result_t (*h_func)(hydra_machine_t *) = H_ ## name; \
-    const hydra_function_def_t *def = hydra_function_find(f_name);                      \
-    if (!def) FAIL("Cannot find function '%s' to register", f_name); \
-    hydra_hook_t ent = {h_func, def->addr.seg, def->addr.off, (flags)}; \
-  hydra_hook_register(ent);                      \
-} while(0)
-
-#define HOOK_DEAD(func, seg, off, flags) HOOK_REGISTER(hydra_hook_dead, seg, off, flags)
-
-#define HOOK_FUNC(name) hydra_result_t name(hydra_machine_t *m)
-
-#define HYDRA_RESUME() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RESUME, -1, -1}; res; })
-#define HYDRA_JUMP(seg, off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP, seg, off}; res; })
-#define HYDRA_JUMP_NEAR(off) ({ hydra_result_t res = {HYDRA_RESULT_TYPE_JUMP_NEAR, 0, off}; res; })
-
-// JUMP TO WHERE A NEAR OR FAR RET IS (LOL)
-// FOR SOME REASON WE CAN SEEM TO IMPL IT DIRECTLY.. MAYBE DOSBOX-X GETS CONFUSED?
-// AT ANY RATE THOUGH.. WE CAN JUST JUMP TO THE INSTRUCTION WE WANT AND LET IT EXECUTE!
-#define RETURN_FAR() return HYDRA_JUMP(0xb48, 0x01)  /* a far return is at this location in the binary */
-#define RETURN_FAR_N(n) ({ \
-  REMOVE_ARGS_FAR(n); \
-  RETURN_FAR(); \
-})
-
-// XXX BROKEN: FIXME
-/* #define HOOK_RET_FAR() ({ result_t res = {RESULT_TYPE_RET_FAR, -1, -1}; res; }) */
-
-
-#define HOOK_RET_NEAR() ({ hydra_result_t res = {HYDRA_RESULT_TYPE_RET_NEAR, -1, -1}; res; })
-#define RETURN_NEAR() return HOOK_RET_NEAR()
 
 // TODO: MOVE THIS SOMEWHERE BETTER?
 void hydra_cpu_dump(hydra_machine_registers_t *cpu);

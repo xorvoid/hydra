@@ -22,6 +22,20 @@ extern hydra_conf_t HYDRA_CONF[1];
 #define CODE_START_SEG (HYDRA_CONF->code_load_offset)
 
 /********************************************************************/
+/* hooks.c */
+
+typedef struct hydra_hook   hydra_hook_t;
+struct hydra_hook
+{
+  hydra_result_t (*func)(hydra_machine_t *);
+  uint16_t hook_cs, hook_ip;
+  int flags;
+};
+
+void hydra_hook_register(hydra_hook_t entry);
+hydra_hook_t * hydra_hook_find(addr_t addr);
+
+/********************************************************************/
 /* exec.c */
 
 enum {
