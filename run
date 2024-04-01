@@ -1,12 +1,12 @@
 #!/bin/bash
 
 if [ "$#" != 2 ]; then
-   echo "usage: $0 <libhydrauser> <exe>"
+   echo "usage: $0 <exe> <libhydrauser>"
    exit 1
 fi
 
-libhydrauser=$(realpath $1)
-exe=$(realpath $2)
+exe=$(realpath $1)
+libhydrauser=$(realpath $2)
 
 mount_d=$(dirname $exe)
 exec_cmd=$(basename $exe)
