@@ -97,3 +97,11 @@ Functions running on Aarch64 clearly use a different stack and address-space tha
 code to be able to access this address-space. Instead it's a pure "shadow space". This means that any local variables
 on the stack of a Hydra function cannot escape. If a local variable needs to be passed to another function that may reside
 on x86-16, then it must be on that machine's stack. In addition, each Hydra function stack-frame resides on a different stack allocation.
+
+## Cloning and Building
+
+```
+git submodule init
+git submodule update
+just build
+```
