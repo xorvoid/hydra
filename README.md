@@ -21,7 +21,7 @@ that calls back-and-forth between the two different machines.
 ## X86-16 Emulation and Hooks
 
 Hydra wraps the dosbox-x emulation to execute binaries. Dosbox-x has been forked and patched to capture machine-state and
-provide hooks for hydra to interrupt its execution at any instruction address.
+provide hooks for Hydra to interrupt its execution at any instruction address.
 
 ## Function hooks
 
@@ -51,11 +51,11 @@ void hook_init()
 }
 ```
 
-When the x86-16 emulator reaches address `0399:0123`, hydra will interrupt the execution and call the `H_my_function`
+When the x86-16 emulator reaches address `0399:0123`, Hydra will interrupt the execution and call the `H_my_function`
 routine above (running on Aarch64). This function can do pretty much anything to the `x86-16` machine state: modify
 registers, write memory, call other x86-16 functions, return to arbitrary addresses, trigger an interrupt, read/write
 to an I/O port, etc etc etc. The call to `F_some_other_function` is an example of calling an arbitrary function. This
-function may be x86-16 machine code or may again be a hooked hydra function. When the function reaches `RETURN_FAR()`,
+function may be x86-16 machine code or may again be a hooked Hydra function. When the function reaches `RETURN_FAR()`,
 the Hydra Runtime will return back into the emulator using a `retf` equivalent return.
 
 ## Annotations system
@@ -90,3 +90,10 @@ Hydra provides many other helpful features:
   - ... and more ...
 
 In addition, [dis86](https://github.com/xorvoid/dis86) is designed to generate code that compiles and runs correctly with hydra.
+
+## Quirks
+
+Functions running on Aarch64 clearly use a different stack and address-space than x86-16. No effort is made for x86-16
+code to be able to access this address-space. Instead it's a pure "shadow space". This means that any local variables
+on the stack of a Hydra function cannot escape. If a local variable needs to be passed to another function that may reside
+on x86-16, then it must be on that machine's stack. In addition, each Hydra function stack-frame resides on a different stack allocation.
