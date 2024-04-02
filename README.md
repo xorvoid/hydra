@@ -126,6 +126,9 @@ DataSection = [
   G( "G_my_global",  typ = "u32",   off = 0x01f4),
 ]
 
+TextSection = [
+]
+
 Callstack = [
   ## Interrupt handlers
   C( "MOUSE",  "HANDLER",  "07a0:0004" ),
