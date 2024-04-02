@@ -105,3 +105,36 @@ git submodule init
 git submodule update
 just build
 ```
+
+## Example: generating annotation metadata
+
+Creating annotations file:
+
+```
+cat >annotations.py <<END
+from hydra.annotations import Function as F, UNKNOWN
+from hydra.annotations import Global as G
+from hydra.annotations import TextData as T
+from hydra.annotations import CallstackConf as C
+
+Functions = [
+  ##  name        ret-type  num-args  start-addr   end-addr
+  F( "F_foobar",  "u16",    2,        "1234:0042", "1234:0056" ),
+]
+
+DataSection = [
+  G( "G_my_global",  typ = "u32",   off = 0x01f4),
+]
+
+Callstack = [
+  ## Interrupt handlers
+  C( "MOUSE",  "HANDLER",  "07a0:0004" ),
+]
+END
+```
+
+Generating appdata sources:
+```
+./py/generate.py annotations.py --appdata-hdr --output-path hydra_user_appdata.h
+./py/generate.py annotations.py --appdata-src --output-path hydra_user_appdata.c
+```
