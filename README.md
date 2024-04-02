@@ -23,7 +23,7 @@ that calls back-and-forth between the two different machines.
 Hydra wraps the dosbox-x emulation to execute binaries. Dosbox-x has been forked and patched to capture machine-state and
 provide hooks for hydra to interrupt its execution at any instruction address.
 
-# Hydra function hooks
+## Function hooks
 
 The main mechanism provided is a function hook such as follows:
 
