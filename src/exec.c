@@ -1,9 +1,4 @@
 #include "internal.h"
-//#include "gizmo/gizmo.h"
-//#include "gizmo/hw_native.h"
-//#include "hw_dosbox.h"
-//#include "data_section.h"
-//#include "functions.h"
 
 #define MAX_EXEC 1024
 static hydra_exec_ctx_t executions[MAX_EXEC];
