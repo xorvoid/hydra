@@ -6,6 +6,7 @@
 #include "../../src/typedefs.h"
 #include "../../src/addr.h"
 #include "../../src/conf.h"
+#include "../../src/dump.h"
 #include "../../src/hooks.h"
 #include "../../src/machine.h"
 #include "../../src/functions.h"

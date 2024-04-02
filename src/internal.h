@@ -5,6 +5,7 @@
 #include "header.h"
 #include "addr.h"
 #include "conf.h"
+#include "dump.h"
 #include "hooks.h"
 #include "machine.h"
 #include "functions.h"
