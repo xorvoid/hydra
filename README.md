@@ -6,14 +6,14 @@ It is designed to support hybrid computation where some functions have been deco
 ## Goal
 
 The overall goal of the Hydra runtime is to provide a platform to integrate decompiled code back into a running x86-16 MS-DOS binary.
-A more traditional approach is to recompile to the origoinal target and link into the original binary. This approach is prohibitive for
+A more traditional approach is to recompile to the original target and link into the original binary. This approach is prohibitive for
 a couple reasons:
 
 1. The address-space on x86-16 is already highly constrained to 640KB and applications of the time already optimized extensively to utilize that limited platform. They
 used several clever techniques such as overlays, calls to HIMEM, etc. Carving more out of this already constrained address space or trying to fit recompilations within the
 original function's byte-rage is quite prohibitive.
 
-2. Resurecting and using an ancient code-rotting compiler is also a challenging task for little benefit.
+2. Resurrecting and using an ancient code-rotting compiler is also a challenging task for little benefit.
 
 Instead, we built Hydra to allow us to compile decompiled functions to ordinary Mac M1 Aarch64 machine code, and to allow a hybrid computation model
 that calls back-and-forth between the two different machines.
