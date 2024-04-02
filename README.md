@@ -86,7 +86,7 @@ HYDRA_FUNC(H_my_function_2)
 
 Hydra provides many other helpful features:
   - Callstack tracking and backtraces
-  - Macros support for common 8086 operations: Registers, Flags, PUSH/POP, REP_MOVS, STI, INB, OUTB, CALL_FAR_INDIRECT, etc
+  - Macros support for common 8086 operations: Registers, Flags, PUSH/POP, REP_MOVS, STI, INB, OUTB, CALL_NEAR, CALL_FAR_INDIRECT, etc
   - ... and more ...
 
 In addition, [dis86](https://github.com/xorvoid/dis86) is designed to generate code that compiles and runs correctly with hydra.
