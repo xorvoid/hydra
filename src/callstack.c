@@ -1,20 +1,13 @@
 #include "internal.h"
+#include <dlfcn.h>
 
 typedef struct call       call_t;
-typedef struct handler    handler_t;
 typedef struct callstack  callstack_t;
 
 struct call
 {
   addr_t src;
   addr_t dst;
-};
-
-struct handler
-{
-  const char *name;
-  u16 seg;
-  u16 off;
 };
 
 enum {
@@ -32,31 +25,10 @@ struct callstack
   call_t call_stack[1024];
   size_t call_idx;
   int    call_event;
+
+  const hydra_callstack_metadata_t *md;
 };
 static callstack_t c[1];
-
-static handler_t handlers[] = {
-  {"MOUSE",          0x07a0, 0x0004},
-  {"KEYBOARD",       0x0454, 0x00e4},
-  {"TIMER",          0x0454, 0x0096},
-  {"OVERLAY_LOADER", 0x0d42, 0x04f2},
-};
-
-static u64 ignore_segments[] = {
-  0xf000, /* DOS interrupt handlers */
-};
-
-static addr_t ignore_addrs[] = {
-  /* Mouse handler calls some function that causes the call stack to get botched: ignore it */
-  {0x0454, 0x00b7},
-  /* Keyboard handler calls some function that cause call stack to get botched: ignore it */
-  {0x0454, 0x0179},
-};
-
-static addr_t jmp_ret[] = {
-  /* Jump from data section to return (weird) */
-  {0x0000, 0x17d9},
-};
 
 void hydra_callstack_init(void)
 {
@@ -65,6 +37,13 @@ void hydra_callstack_init(void)
   c->last_code.off        = 0;
   c->call_idx             = 0;
   c->call_event           = CALL_EVENT_NONE;
+  c->md                   = NULL;
+
+  // Try to load user-provided callstack configuration data
+  const hydra_callstack_metadata_t *(*user_fn)(void) = NULL;
+  *(void**)&user_fn = dlsym(RTLD_DEFAULT, "hydra_user_callstack");
+  if (!user_fn) FAIL("Failed to find user metadata: hydra_user_callstack()");
+  c->md = user_fn();
 }
 
 void hydra_callstack_trigger_enter(u16 seg, u16 off)
@@ -254,6 +233,20 @@ static bool is_instr_ret(hydra_machine_t *m)
   return false;
 }
 
+static hydra_callstack_conf_t * conf_find(hydra_machine_t *m, int type)
+{
+  if (!c->md) return NULL;
+
+  for (size_t i = 0; i < c->md->n_confs; i++) {
+    hydra_callstack_conf_t *conf = &c->md->confs[i];
+    if (conf->type != type) continue;
+    if (m->registers->cs == conf->addr.seg + CODE_START_SEG && m->registers->ip == conf->addr.off) {
+      return conf;
+    }
+  }
+  return NULL;
+}
+
 static void update(hydra_machine_t *m, size_t interrupt_count)
 {
   // Report interrupts
@@ -270,36 +263,34 @@ static void update(hydra_machine_t *m, size_t interrupt_count)
   }
 
   // Check for handler entry
-  for (size_t i = 0; i < ARRAY_SIZE(handlers); i++) {
-    handler_t *h = &handlers[i];
-    if (m->registers->cs == h->seg + CODE_START_SEG && m->registers->ip == h->off) {
-      // Found! Pull the save return address from the satck and "enter"
-      addr_t stack_ptr = {m->registers->ss, m->registers->sp};
-      addr_t src = {m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr))};
-      callstack_enter(h->name, m->registers, src);
-      //callstack_enter(h->name, m->registers, c->last_code);
-      break;
-    }
+  hydra_callstack_conf_t *h = conf_find(m, HYDRA_CALLSTACK_CONF_TYPE_HANDLER);
+  if (h) {
+    // Found! Pull the save return address from the satck and "enter"
+    addr_t stack_ptr = {m->registers->ss, m->registers->sp};
+    addr_t src = {m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr))};
+    callstack_enter(h->name, m->registers, src);
   }
 
   // Ignore ROM and above (DOS Reserved Mem)
   if (m->registers->cs >= 0xc000) return;
 
   // Ignore certain addrs
-  for (size_t i = 0; i < ARRAY_SIZE(ignore_addrs); i++) {
-    addr_t *s = &ignore_addrs[i];
-    if (m->registers->cs == s->seg + CODE_START_SEG && m->registers->ip == s->off) {
-      return;
-    }
+  if (conf_find(m, HYDRA_CALLSTACK_CONF_TYPE_IGNORE_ADDR)) {
+    return;
   }
 
   // Special jump ret locations
-  for (size_t i = 0; i < ARRAY_SIZE(ignore_addrs); i++) {
-    addr_t *s = &jmp_ret[i];
-    if (m->registers->cs == s->seg + CODE_START_SEG && m->registers->ip == s->off) {
-      c->call_event = CALL_EVENT_JMP_RET;
-    }
+  //hydra_callstack_conf_t *j =
+  if (conf_find(m, HYDRA_CALLSTACK_CONF_TYPE_JUMPRET)) {
+    c->call_event = CALL_EVENT_JMP_RET;
   }
+
+  /* for (size_t i = 0; i < ARRAY_SIZE(ignore_addrs); i++) { */
+  /*   addr_t *s = &jmp_ret[i]; */
+  /*   if (m->registers->cs == s->seg + CODE_START_SEG && m->registers->ip == s->off) { */
+  /*     c->call_event = CALL_EVENT_JMP_RET; */
+  /*   } */
+  /* } */
 
   // Check for instructions that manipulate the callstack
   if (is_instr_call(m))  c->call_event = CALL_EVENT_CALL;

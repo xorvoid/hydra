@@ -116,3 +116,13 @@ class TextData:
         if self.typ.array_len is not None:
             if self.typ.array_len != array_len: raise Exception(f"Misconfiguration: config specified {self.typ.array_len} elements, but region contains {array_len}: {name}")
         self.typ.array_len = array_len
+
+CALLSTACK_CONF_VALID_TYPES = { 'HANDLER', 'IGNORE_ADDR', 'JUMPRET', }
+
+class CallstackConf:
+    def __init__(self, name, typ, addr):
+        if typ not in CALLSTACK_CONF_VALID_TYPES:
+            raise Exception(f'Not a valid callstack conf type: {typ}')
+        self.name = name
+        self.typ  = typ
+        self.addr = Addr(addr)

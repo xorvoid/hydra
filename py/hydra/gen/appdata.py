@@ -83,3 +83,19 @@ def gen_src(data, out=None):
     emit('  return md;')
     emit('}')
     emit('')
+    emit('const hydra_callstack_metadata_t * hydra_user_callstack(void)')
+    emit('{')
+    emit('  static hydra_callstack_conf_t confs[] = {')
+    for conf in data['callstack']:
+        type_str = f'HYDRA_CALLSTACK_CONF_TYPE_{conf.typ},'
+        name_str = f'"{conf.name}",'
+        emit(f'    {{ {type_str:<40} {name_str:<25} {{ 0x{conf.addr.seg:04x}, 0x{conf.addr.off:04x} }} }},')
+    emit('  };')
+    emit('')
+    emit('  static hydra_callstack_metadata_t md[1];')
+    emit('  md->n_confs = sizeof(confs)/sizeof(confs[0]);')
+    emit('  md->confs = confs;')
+    emit('')
+    emit('  return md;')
+    emit('}')
+    emit('')

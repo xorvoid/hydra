@@ -8,6 +8,7 @@
 #include "dump.h"
 #include "hooks.h"
 #include "machine.h"
+#include "callstack.h"
 #include "functions.h"
 
 // FIXME: REMOVE THIS HARDCODING

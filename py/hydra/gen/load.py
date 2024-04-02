@@ -7,7 +7,8 @@ def annotations(path):
     spec.loader.exec_module(mod)
 
     return {
-        'functions':    mod.Functions,
-        'data_section': mod.DataSection,
-        'text_section': mod.TextSection,
+        'functions':       mod.Functions,
+        'data_section':    mod.DataSection,
+        'text_section':    mod.TextSection,
+        'callstack':       mod.Callstack,
     }
