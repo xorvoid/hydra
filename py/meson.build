@@ -5,7 +5,6 @@ SRC = [
   'hydra/__init__.py',
   'hydra/annotations.py',
   'hydra/gen/load.py',
-  'hydra/gen/functions.py',
   'hydra/gen/appdata.py',
   'hydra/gen/dis86.py',
 ]
