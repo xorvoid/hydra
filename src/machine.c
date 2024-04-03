@@ -196,6 +196,13 @@ void hydra_impl_outb(u16 port, u8 val)
   m->registers->dx = save_dx;
 }
 
+void hydra_impl_int(u8 num)
+{
+  /* int <num>; retf; */
+  u8 machine_code[] = {0xcd, num, 0xcb};
+  hydra_impl_raw_code(machine_code, ARRAY_SIZE(machine_code));
+}
+
 uint32_t hydra_impl_ptr_to_flataddr(hydra_machine_t *m, void *_ptr)
 {
   uint8_t * ptr = (uint8_t*)_ptr;

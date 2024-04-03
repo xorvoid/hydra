@@ -166,6 +166,8 @@
 #define INB(port) hydra_impl_inb(port);
 #define OUTB(port, val) hydra_impl_outb(port, val)
 
+#define INT(num) hydra_impl_int(num);
+
 #define FRAME_ENTER(n) ({ PUSH(BP); BP = SP; SP -= n; })
 #define FRAME_LEAVE()  ({ SP = BP; BP = POP(); })
 
@@ -214,6 +216,7 @@ void     hydra_impl_call_func(const char *name);
 void     hydra_impl_sti(void);
 u8       hydra_impl_inb(u16 port);
 void     hydra_impl_outb(u16 port, u8 val);
+void     hydra_impl_int(u8 num);
 void     hydra_impl_nop(void);
 addr_t   hydra_impl_ptr_to_addr(hydra_machine_t *m, void *ptr);
 u16      hydra_impl_ptr_to_off(hydra_machine_t *m, void *ptr, u16 seg);
