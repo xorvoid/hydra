@@ -12,10 +12,14 @@ HYDRA_MACHINE_INIT_FUNC(hydra_machine_init)
   *(void**)&hydra_user_init = dlsym(RTLD_DEFAULT, "hydra_user_init");
   if (!hydra_user_init) FAIL("Failed to find user init function: hydra_user_init()");
 
+
+  HYDRA_CONF->code_load_offset = (u16)-1;
+  HYDRA_CONF->data_section_seg = (u16)-1;
+
   hydra_user_init(HYDRA_CONF, hw, audio);
 
-  if (!HYDRA_CONF->code_load_offset) FAIL("User init failed to set init->code_load_offset");
-  if (!HYDRA_CONF->data_section_seg) FAIL("User init failed to set init->data_section_seg");
+  if (HYDRA_CONF->code_load_offset == (u16)-1) FAIL("User init failed to set init->code_load_offset");
+  if (HYDRA_CONF->data_section_seg == (u16)-1) FAIL("User init failed to set init->data_section_seg");
 
   // Set up the datasection baseptr
   u16 seg = HYDRA_CONF->code_load_offset + HYDRA_CONF->data_section_seg;
