@@ -14,9 +14,10 @@ void hydra_impl_call_far(u16 seg, u16 off)
 
   // Save a return reference to this executor on the 8086 stack
   hydra_machine_t *m = &exec->machine;
-  u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
-  m->hardware->mem_write16(m->hardware->ctx, addr - 2, 0xffff);
-  m->hardware->mem_write16(m->hardware->ctx, addr - 4, exec_id);
+  u32 addr_off = (u32)m->registers->ss * 16 + (u16)(m->registers->sp - 2);
+  u32 addr_seg = (u32)m->registers->ss * 16 + (u16)(m->registers->sp - 4);
+  m->hardware->mem_write16(m->hardware->ctx, addr_off, 0xffff);
+  m->hardware->mem_write16(m->hardware->ctx, addr_seg, exec_id);
   m->registers->sp -= 4;
 
   // Save the real CS:IP
