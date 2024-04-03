@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if [ "$#" != 2 ]; then
+   echo "usage: $0 <img> <libhydrauser>"
+   exit 1
+fi
+
+# Unpack args
+img=$(realpath $1)
+libhydrauser=$(realpath $2)
+
+## Compute repo-local paths
+THISDIR=$(dirname $(realpath $0))
+dosbox=$THISDIR/src/dosbox-x/src/dosbox-x
+conf=$THISDIR/conf/dosbox.conf
+
+## Pad the img so dosbox is happy
+size=$(du -sb $img | awk '{print $1}')
+minsize=163840
+if [ $size -lt $minsize ]; then
+    pad=$(expr $minsize - $size)
+    dd if=/dev/zero of=/tmp/hydra_boot.pad count=$pad bs=1 2>/dev/null
+    cat $img /tmp/hydra_boot.pad > /tmp/hydra_boot.img
+else
+    cat $img > /tmp/hydra_boot.img
+fi
+
+## Run it!
+$dosbox -conf "$conf" -c "boot /tmp/hydra_boot.img"
+#-hydra "$libhydrauser"
