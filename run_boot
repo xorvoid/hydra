@@ -43,6 +43,4 @@ if [ "$serial_input" != "" ]; then
 fi
 
 ## Run it!
-$dosbox -conf "$conf" -c "boot boot.img"
-
-#-hydra "$libhydrauser"
+$dosbox -conf "$conf" -c "boot boot.img" -hydra "$libhydrauser"
