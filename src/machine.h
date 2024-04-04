@@ -185,6 +185,12 @@
   (u32)(upper) << 16 | (u32)(lower); \
 })
 
+#define MAKE_16(upper, lower) ({ \
+  STATIC_ASSERT_U8(upper); \
+  STATIC_ASSERT_U8(lower); \
+  (u16)(upper) << 8 | (u16)(lower); \
+})
+
 #define UPPER(_u32) ({ STATIC_ASSERT_U32(_u32); (u16)((_u32) >> 16); })
 #define LOWER(_u32) ({ STATIC_ASSERT_U32(_u32); (u16)((_u32)); })
 
