@@ -50,6 +50,14 @@ class Type:
             s += f'[{sz}]'
         return s
 
+class Off:
+    def __init__(self, off):
+        self.off = int(off, 16)
+        assert 0 <= self.off and self.off < (1<<16)
+
+    def __str__(self):
+        return f'0x{self.off:04x}'
+
 class Addr:
     def __init__(self, addr):
         parts = addr.split(':')
@@ -67,12 +75,15 @@ class Addr:
 UNKNOWN=-1
 
 class Function:
-    def __init__(self, name, ret, args, start_addr, end_addr, flags=0):
+    def __init__(self, name, ret, args, start_addr, end_addr, flags=0, overlay=None):
         self.name = name
         self.ret = ret
         self.args = args
         self.start_addr = Addr(start_addr)
         self.end_addr = Addr(end_addr) if end_addr else None
+        self.overlay_num = overlay[0] if overlay else None
+        self.overlay_start = Off(overlay[1]) if overlay else None
+        self.overlay_end = Off(overlay[2]) if overlay else None
         self.flags = flags
 
 class Global:

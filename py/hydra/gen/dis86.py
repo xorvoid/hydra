@@ -12,6 +12,12 @@ def gen_functions(functions):
             extra += 'dont_pop_args 1 '
         if func.flags == 'INDIRECT_CALL_LOCATION':
             extra += 'indirect_call_location 1 '
+        if func.overlay_num is not None:
+            extra += f'overlay_num {func.overlay_num} '
+        if func.overlay_start is not None:
+            extra += f'overlay_start {func.overlay_start} '
+        if func.overlay_end is not None:
+            extra += f'overlay_end {func.overlay_end} '
         mode = 'far'
         if func.flags == 'NEAR':
             mode = 'near'
