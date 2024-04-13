@@ -26,8 +26,18 @@ def gen_functions(functions):
         emit(f'    {func.name:30} {{ start {func.start_addr} end {end} mode {mode} ret {func.ret} args {func.args} {extra}}} ')
     emit("  }");
 
+def gen_structures(structures):
+    emit("  structures {")
+    for struct in structures:
+        emit(f"    {struct.name:<15} {{ size {struct.size} members {{")
+        for i, mbr in enumerate(struct.members):
+            num = f'_{i}'
+            emit(f"      {num:<5} {{ name {mbr.name:<15} type {str(mbr.typ):<15} offset {mbr.off} }}")
+        emit(f"    }}}}")
+    emit("  }")
+
 def gen_data_section(datasection):
-    emit("  globals {");
+    emit("  globals {")
     for var in datasection:
         emit(f'    {var.name:30} {{ off {var.off:04x}  type {str(var.typ):20} }}')
     emit("  }");
@@ -118,6 +128,7 @@ def gen_conf(data, outfile=None):
     out = sys.stdout if not outfile else outfile
     emit("dis86 {");
     gen_functions(data['functions'])
+    gen_structures(data['structures'])
     gen_data_section(data['data_section'])
     gen_text_section(data['text_section'])
     gen_segmap()
