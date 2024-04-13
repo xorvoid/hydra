@@ -1,10 +1,11 @@
+_TypeSizes = {
+    'u8':  1,
+    'u16': 2,
+    'u32': 4,
+}
+
 def basetype_size_in_bytes(typename):
-    d = {
-        'u8':  1,
-        'u16': 2,
-        'u32': 3,
-    }
-    return d.get(typename, None)
+    return _TypeSizes.get(typename, None)
 
 class Type:
     def __init__(self, basetype, is_array, array_len):
@@ -16,7 +17,7 @@ class Type:
     def from_str(s):
         parts = s.split('[')
         if len(parts) > 2:
-            raise Expception(f'Invalid type: "{s}"')
+            raise Exception(f'Invalid type: "{s}"')
 
         typ = Type(parts[0], False, None)
         if len(parts) > 1:
@@ -34,9 +35,25 @@ class Type:
     def as_basetype(self):
         return Type(self.basetype, False, None)
 
+    def get_ctype_str_parts(self):
+        assert isinstance(self.basetype, str)
+
+        if not self.is_array:
+            return (self.basetype, '')
+        else:
+            if self.array_len is None:
+                raise Exception(f'No array length provided for: {self} ... required by get_ctype_str_parts()')
+
+            return (self.basetype, f'[{self.array_len}]')
+
+    def fmt_ctype_str(self, name):
+        start, end = self.get_ctype_str_parts()
+        return f'{start:<15} {name}{end}'
+
     def size_in_bytes(self):
         basesz = basetype_size_in_bytes(self.basetype)
         if not self.is_array: return basesz
+
 
         if basesz is None: return None
         if self.array_len is None: return None
@@ -129,6 +146,46 @@ class TextData:
         self.typ.array_len = array_len
 
 CALLSTACK_CONF_VALID_TYPES = { 'HANDLER', 'IGNORE_ADDR', 'JUMPRET', }
+
+class Struct:
+    def __init__(self, name, size, members):
+        self.name = name
+        self.size = size
+        self.members = members
+
+        if not self.name.endswith('_t'):
+            raise Exception(f'Struct names should end with _t: {name}')
+
+        if name in _TypeSizes:
+            raise Exception(f'Type name has already been defined: {name}')
+        _TypeSizes[name] = size
+
+        ## validate
+        off = 0
+        for mbr in self.members:
+            if mbr.off > off:
+                raise Exception(f'Skipped bytes range {off}-{mbr.off} in struct "{name}"')
+            if mbr.off < off:
+                raise Exception(f'Overlapping byte range {mbr.off}-{off} in struct "{name}"')
+            sz = mbr.size_in_bytes()
+            if sz is None:
+                raise Exception(f'Member in struct has no known size: {name}.{mbr.name}')
+            off += mbr.size_in_bytes()
+
+        if off != self.size:
+            raise Exception(f'Size mismtch: struct size is {self.size} but members use {off} bytes')
+
+    def struct_name(self):
+        return self.name[:-2]
+
+class Member:
+    def __init__(self, name, typ, off):
+        self.name = name
+        self.typ  = Type.from_str(typ)
+        self.off  = off
+
+    def size_in_bytes(self):
+        return self.typ.size_in_bytes()
 
 class CallstackConf:
     def __init__(self, name, typ, addr):

@@ -8,6 +8,7 @@ def annotations(path):
 
     return {
         'functions':       mod.Functions,
+        'structures':      mod.Structures,
         'data_section':    mod.DataSection,
         'text_section':    mod.TextSection,
         'callstack':       mod.Callstack,

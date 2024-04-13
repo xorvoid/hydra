@@ -6,6 +6,7 @@ def gen_hdr(data, out=None):
 
     functions = data['functions']
     datasection = data['data_section']
+    structures = data['structures']
 
     emit('#pragma once')
     emit('#include "hydra/hydra.h"')
@@ -44,6 +45,21 @@ def gen_hdr(data, out=None):
     emit('')
     emit('HYDRA_FUNCTION_DEFINITIONS(HYDRA_DEFINE_CALLSTUB)')
     emit('')
+
+    emit('/**************************************************************************************************************/')
+    emit('/* Structures */')
+    emit('/**************************************************************************************************************/')
+    emit('')
+
+    for struct in structures:
+        emit(f'typedef struct {struct.struct_name()} {struct.name};')
+        emit(f'struct __attribute__((packed)) {struct.struct_name()}')
+        emit('{')
+        for mbr in struct.members:
+            emit(f'  {mbr.typ.fmt_ctype_str(mbr.name)};')
+        emit('};')
+        emit(f'static_assert(sizeof({struct.name}) == {struct.size}, "");');
+        emit('')
 
     emit('/**************************************************************************************************************/')
     emit('/* Data Section Globals */')
