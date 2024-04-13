@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,3 +23,9 @@ size_t addr_abs(addr_t s);
 
 // Compute relative addr from some base segment
 addr_t addr_relative_to_segment(addr_t s, uint16_t seg);
+
+// Equal??
+static inline bool addr_equal(addr_t a, addr_t b)
+{
+  return a.seg == b.seg && a.off == b.off;
+}

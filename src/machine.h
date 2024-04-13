@@ -202,8 +202,10 @@
 #define U32_TO_ARGS(_u32) LOWER(_u32), UPPER(_u32)
 
 
-#define RETURN_FAR()  return HYDRA_RESULT_RET_FAR()
-#define RETURN_NEAR() return HYDRA_RESULT_RET_NEAR()
+#define RETURN_RESUME()       return HYDRA_RESULT_RESUME()
+#define RETURN_JUMP(seg, off) return HYDRA_RESULT_JUMP(seg, off)
+#define RETURN_FAR()          return HYDRA_RESULT_RET_FAR()
+#define RETURN_NEAR()         return HYDRA_RESULT_RET_NEAR()
 
 #define RETURN_FAR_N(n) ({\
   REMOVE_ARGS_FAR(n); \

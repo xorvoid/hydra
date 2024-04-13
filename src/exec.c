@@ -1,8 +1,44 @@
 #include "internal.h"
 
 #define MAX_EXEC 1024
+#define MAX_OVERLAY_TRACKING 1024
+
 static hydra_exec_ctx_t executions[MAX_EXEC];
 static hydra_exec_ctx_t *thread_active = NULL;
+
+typedef struct overlay_entry overlay_entry_t;
+struct overlay_entry
+{
+  addr_t stub;
+  addr_t dest;
+};
+
+typedef struct overlay_tracking overlay_tracking_t;
+struct overlay_tracking
+{
+  size_t n_entries;
+  overlay_entry_t entries[MAX_OVERLAY_TRACKING];
+};
+static overlay_tracking_t overlay_tracking[1];
+
+overlay_entry_t *overlay_tracking_find_or_alloc(addr_t stub)
+{
+  for (size_t i = 0; i < overlay_tracking->n_entries; i++) {
+    overlay_entry_t *ent = &overlay_tracking->entries[i];
+    if (addr_equal(stub, ent->stub)) {
+      return ent;
+    }
+  }
+
+  if (overlay_tracking->n_entries == ARRAY_SIZE(overlay_tracking->entries)) {
+    FAIL("Ran out of entries in the overlay tracking table");
+  }
+
+  size_t idx = overlay_tracking->n_entries++;
+  overlay_entry_t *ent = &overlay_tracking->entries[idx];
+  ent->stub = stub;
+  return ent;
+}
 
 hydra_exec_ctx_t *execution_context_get(u16 *opt_exec_id)
 {
@@ -94,9 +130,13 @@ static hydra_result_t run_begin(hydra_hook_t *hook, hydra_machine_t *m)
     u32 addr = (u32)m->registers->cs * 16 + m->registers->ip;
     u8 * mem = m->hardware->mem_hostaddr(m->hardware->ctx, addr);
 
+    addr_t stub;
+    stub.seg = m->registers->cs - CODE_START_SEG;
+    stub.off = m->registers->ip;
+
     // "int 0x3f" is encoded as "cd 3f"
     if (0 == memcmp(mem, "\xcd\x3f", 2)) {
-      printf("Call to %04x:%04x but it's not paged in.. waiting..\n", m->registers->cs - CODE_START_SEG, m->registers->ip);
+      printf("Call to %04x:%04x but it's not paged in.. waiting..\n", stub.seg, stub.off);
       return HYDRA_RESULT_RESUME();
     }
 
@@ -104,14 +144,18 @@ static hydra_result_t run_begin(hydra_hook_t *hook, hydra_machine_t *m)
       FAIL("Expected a Jump Far, found: 0x%02x", mem[0]);
     }
 
-    u16 off, seg;
-    memcpy(&off, mem+1, 2);
-    memcpy(&seg, mem+3, 2);
+    addr_t dest;
+    memcpy(&dest.off, mem+1, 2);
+    memcpy(&dest.seg, mem+3, 2);
 
-    printf("Call to %04x:%04x paged into %04x:%04x\n", m->registers->cs - CODE_START_SEG, m->registers->ip, seg, off);
+    overlay_entry_t *ent = overlay_tracking_find_or_alloc(stub);
+    if (!addr_equal(dest, ent->dest)) {
+      printf("Call to %04x:%04x paged into %04x:%04x\n", stub.seg, stub.off, dest.seg, dest.off);
+      ent->dest = dest;
+    }
 
-    m->registers->cs = seg;
-    m->registers->ip = off;
+    m->registers->cs = dest.seg;
+    m->registers->ip = dest.off;
   }
 
   hydra_exec_ctx_t *exec = execution_acquire();
