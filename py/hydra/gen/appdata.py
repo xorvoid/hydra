@@ -56,7 +56,8 @@ def gen_hdr(data, out=None):
         emit(f'struct __attribute__((packed)) {struct.struct_name()}')
         emit('{')
         for mbr in struct.members:
-            emit(f'  {mbr.typ.fmt_ctype_str(mbr.name)};')
+            mbr_entry = f'{mbr.typ.fmt_ctype_str(mbr.name)};'
+            emit(f'  {mbr_entry:<40}  /* 0x{mbr.off:02x} */')
         emit('};')
         emit(f'static_assert(sizeof({struct.name}) == {struct.size}, "");');
         emit('')
