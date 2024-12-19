@@ -98,6 +98,8 @@
 #define PTR_16_FROM_32(_u32) ({ STATIC_ASSERT_U32(_u32); u32 v = (_u32); PTR_16(v>>16, v); })
 #define PTR_32_FROM_32(_u32) ({ STATIC_ASSERT_U32(_u32); u32 v = (_u32); PTR_32(v>>16, v); })
 
+#define TYPE_FROM_32(type, _u32) ((type*)PTR_8_FROM_32(_u32))
+
 #define VAR_8(seg, off)  (*PTR_8(seg, off))
 #define VAR_16(seg, off) (*PTR_16(seg, off))
 #define VAR_32(seg, off) (*PTR_32(seg, off))
@@ -149,7 +151,9 @@
   POP_ARGS(args);                \
   AX; })
 
-#define CALL_NEAR(off) hydra_impl_call_near(off)
+#define CALL_NEAR_OFF(off) hydra_impl_call_near_off(off, 0)
+#define CALL_NEAR_OFF_RELOC(off) hydra_impl_call_near_off(off, 1)
+#define CALL_NEAR(off) hydra_impl_call_near_abs(off)
 #define CALL_FUNC(name) hydra_impl_call_func(#name)
 
 #define PUSH_ARGS(args) do { \
@@ -161,6 +165,7 @@
 } while(0)
 
 #define NOP() hydra_impl_nop()
+#define CLI() hydra_impl_cli()
 #define STI() hydra_impl_sti()
 
 #define INB(port) hydra_impl_inb(port);
@@ -219,8 +224,10 @@ void     hydra_impl_unknown(const char *func, int line);
 void     hydra_impl_call_far(u16 seg, u16 off);
 void     hydra_impl_call_far_cs(u16 cs_reg_value, u16 off);
 void     hydra_impl_call_far_indirect(u32 addr);
-void     hydra_impl_call_near(u16 off);
+void     hydra_impl_call_near_off(u16 off, int maybe_reloc);
+void     hydra_impl_call_near_abs(u16 abs_off);
 void     hydra_impl_call_func(const char *name);
+void     hydra_impl_cli(void);
 void     hydra_impl_sti(void);
 u8       hydra_impl_inb(u16 port);
 void     hydra_impl_outb(u16 port, u8 val);

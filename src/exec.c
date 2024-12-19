@@ -196,7 +196,7 @@ static bool try_resume(hydra_machine_t *m, hydra_result_t *_result)
   if (m->registers->cs != 0xf000 && m->registers->ip >= 0xff00) {
     size_t idx = m->registers->ip & 0xff;
     hydra_exec_ctx_t *exec = &executions[idx];
-    if (m->registers->cs != exec->saved_cs) FAIL("Expected matching code segments");
+    if (!exec->maybe_reloc && m->registers->cs != exec->saved_cs) FAIL("Expected matching code segments");
     *_result = run_continue(m, exec);
     return true;
   }
@@ -208,12 +208,16 @@ void hydra_exec_init(hydra_machine_hardware_t *hw, hydra_machine_audio_t *audio)
 {
 }
 
+int trace = 0;
+
 int hydra_exec_run(hydra_machine_t *m)
 {
   hydra_result_t result = HYDRA_RESULT_RESUME();
 
-  /* printf("Hook run | CS:IP = %04x:%04x\n", */
-  /*        m->registers->cs - CODE_START_SEG, m->registers->ip); */
+  if (trace) {
+    printf("Hook run | CS:IP = %04x:%04x\n",
+           m->registers->cs - CODE_START_SEG, m->registers->ip);
+  }
 
   // Try to resume an active execution ("ret" or "retf")
   bool resumed = try_resume(m, &result);

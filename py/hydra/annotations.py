@@ -1,7 +1,10 @@
 _TypeSizes = {
     'u8':  1,
+    'i8':  1,
     'u16': 2,
+    'i16': 2,
     'u32': 4,
+    'i32': 4,
 }
 
 def basetype_size_in_bytes(typename):
@@ -92,7 +95,7 @@ class Addr:
 UNKNOWN=-1
 
 class Function:
-    def __init__(self, name, ret, args, start_addr, end_addr, flags=0, overlay=None):
+    def __init__(self, name, ret, args, start_addr, end_addr, flags=0, overlay=None, regargs=None):
         self.name = name
         self.ret = ret
         self.args = args
@@ -101,6 +104,7 @@ class Function:
         self.overlay_num = overlay[0] if overlay else None
         self.overlay_start = Off(overlay[1]) if overlay else None
         self.overlay_end = Off(overlay[2]) if overlay else None
+        self.regargs = ','.join(regargs) if regargs else None
         self.flags = flags
 
 class Global:
@@ -126,11 +130,12 @@ def validate_data_section(ds):
             mem[i] = 1
 
 class TextData:
-    def __init__(self, name, typ, start_addr, end_addr):
+    def __init__(self, name, typ, start_addr, end_addr, access_at=None):
         self.name = name
         self.typ = Type.from_str(typ)
         self.start_addr = Addr(start_addr)
         self.end_addr = Addr(end_addr)
+        self.access_at = access_at
 
         ## infer array size
         nbytes = self.end_addr.abs() - self.start_addr.abs()

@@ -23,6 +23,7 @@ void hydra_impl_call_far(u16 seg, u16 off)
   // Save the real CS:IP
   exec->saved_cs = m->registers->cs;
   exec->saved_ip = m->registers->ip;
+  exec->maybe_reloc = 0;
 
   // Update the cpu to the call site
   exec->result.type = HYDRA_RESULT_TYPE_CALL;
@@ -45,7 +46,7 @@ void hydra_impl_call_far(u16 seg, u16 off)
   // Return into the hook impl
 }
 
-void hydra_impl_call_near(u16 off)
+void hydra_impl_call_near_off(u16 off, int maybe_reloc)
 {
   // Grab the current execution context
   u16 exec_id = 0;
@@ -58,16 +59,18 @@ void hydra_impl_call_near(u16 off)
   hydra_machine_t *m = &exec->machine;
   u32 addr = (u32)m->registers->ss * 16 + m->registers->sp;
   m->hardware->mem_write16(m->hardware->ctx, addr - 2, 0xff00 + exec_id);
+  //printf("exec: 0x%x\n", 0xff00 + exec_id);
   m->registers->sp -= 2;
 
   // Save the real IP
   exec->saved_cs = m->registers->cs;
   exec->saved_ip = m->registers->ip;
+  exec->maybe_reloc = maybe_reloc;
 
   // Update the cpu to the call site
   assert(m->registers->cs >= CODE_START_SEG);
   exec->result.type = HYDRA_RESULT_TYPE_CALL_NEAR;
-  exec->result.new_ip = off - 16*(m->registers->cs - CODE_START_SEG);
+  exec->result.new_ip = off;
 
   // Wake up the main thread
   pthread_cond_signal(exec->cond_main);
@@ -76,16 +79,30 @@ void hydra_impl_call_near(u16 off)
   pthread_cond_wait(exec->cond_child, exec->mutex);
 
   // Sanity
-  assert(m->registers->cs == exec->saved_cs);
+  //printf("after sp: 0x%x\n", m->registers->sp);
+  if (!maybe_reloc) {
+    assert(m->registers->cs == exec->saved_cs);
+  }
 
   // Restore the exec context (another function may have modified it)
   execution_context_set(exec);
 
   // Restore the real IP
-  m->registers->cs = exec->saved_cs;
+  //m->registers->cs = exec->saved_cs;
   m->registers->ip = exec->saved_ip;
 
   // Return into the hook impl
+}
+
+
+void hydra_impl_call_near_abs(u16 abs_off)
+{
+  // Grab the current execution context
+  u16 exec_id = 0;
+  hydra_exec_ctx_t *exec = execution_context_get(&exec_id);
+  hydra_machine_t *m = &exec->machine;
+
+  hydra_impl_call_near_off(abs_off - 16*(m->registers->cs - CODE_START_SEG), 0);
 }
 
 void hydra_impl_call_far_cs(u16 cs_reg_value, u16 off)
@@ -149,6 +166,13 @@ void hydra_impl_nop(void)
   // NO-OP
   u8 code[] = {0x90};
   hydra_impl_raw_code(code, 1);
+}
+
+// cli
+void hydra_impl_cli(void)
+{
+  u8 machine_code[] = {0xfa, 0xcb}; /* cli; retf; */
+  hydra_impl_raw_code(machine_code, ARRAY_SIZE(machine_code));
 }
 
 // sti

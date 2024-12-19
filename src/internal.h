@@ -62,6 +62,7 @@ struct hydra_exec_ctx
 
   u16                   saved_cs;
   u16                   saved_ip;
+  int                   maybe_reloc;
 };
 
 hydra_exec_ctx_t * execution_context_get(u16 *opt_exec_id);

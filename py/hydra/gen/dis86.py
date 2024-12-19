@@ -18,6 +18,8 @@ def gen_functions(functions):
             extra += f'overlay_start {func.overlay_start} '
         if func.overlay_end is not None:
             extra += f'overlay_end {func.overlay_end} '
+        if func.regargs is not None:
+            extra += f'regargs {func.regargs} '
         mode = 'far'
         if func.flags == 'NEAR':
             mode = 'near'
@@ -45,7 +47,10 @@ def gen_data_section(datasection):
 def gen_text_section(textsection):
     emit("  text_section {");
     for var in textsection:
-        emit(f'    {var.name:30} {{ start {var.start_addr}  end {var.end_addr} type {str(var.typ):20} }}')
+        extra = ''
+        if var.access_at is not None:
+            extra += f'access {var.access_at} '
+        emit(f'    {var.name:30} {{ start {var.start_addr}  end {var.end_addr} type {str(var.typ):20} {extra}}}')
     emit("  }");
 
 # def gen_segmap():
