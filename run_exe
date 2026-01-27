@@ -20,4 +20,5 @@ conf=$THISDIR/conf/dosbox.conf
 cd $mount_d
 
 ## Run it!
+export SDL_AUDIODRIVER=pulse
 $dosbox -conf "$conf" -hydra "$libhydrauser" -c "mount d $mount_d"  -c "D:" -c "$exec_cmd" -c "exit"

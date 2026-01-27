@@ -20,7 +20,6 @@ flags_common = [
   '-Dtypeof=__typeof__',
   '-I' + meson.source_root() + '/src',
   '-g', '-fPIC',
-  '-m64',
   '-ffast-math', '-fno-associative-math', '-fno-reciprocal-math',
   '-fno-strict-aliasing',
 ]
@@ -59,7 +58,7 @@ flags_debug = [
 link_flags_common = [
   '-fdiagnostics-color=always',
   #'-fvisibility=hidden', '-fvisibility-inlines-hidden',
-  '-lpthread', '-m64'
+  '-lpthread'
 ]
 
 if not meson.is_subproject()
