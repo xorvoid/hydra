@@ -210,8 +210,43 @@ void hydra_exec_init(hydra_machine_hardware_t *hw, hydra_machine_audio_t *audio)
 
 int trace = 0;
 
+
+int hydra_exec_run_special_modes(hydra_machine_t *m, addr_t addr, int *_done) {
+  *_done = 1;
+  switch (HYDRA_MODE->mode) {
+    case HYDRA_MODE_CAPTURE: {
+      if (addr.seg == HYDRA_MODE->capture_addr.seg + CODE_START_SEG && addr.off == HYDRA_MODE->capture_addr.off) {
+        m->hardware->state_save(m->hardware->ctx, HYDRA_MODE->state_path);
+        exit(0);
+      }
+      return 0;
+    } break;
+    case HYDRA_MODE_RESTORE: {
+      if (hydra_hook_entry(addr)) {
+        m->hardware->state_restore(m->hardware->ctx, HYDRA_MODE->state_path);
+        HYDRA_MODE->mode = HYDRA_MODE_NORMAL;
+        return 2;
+      }
+      return 0;
+    } break;
+  }
+
+  *_done = 0;
+  return 0;
+}
+
 int hydra_exec_run(hydra_machine_t *m)
 {
+  addr_t s = {
+    .seg = m->registers->cs,
+    .off = m->registers->ip,
+  };
+
+  // Handle special capture/restore modes
+  int done = 0;
+  int ret = hydra_exec_run_special_modes(m, s, &done);
+  if (done) return ret;
+
   hydra_result_t result = HYDRA_RESULT_RESUME();
 
   if (trace) {
@@ -224,10 +259,6 @@ int hydra_exec_run(hydra_machine_t *m)
 
   // Begin a new hook?
   if (!resumed) {
-    addr_t s = {
-      .seg = m->registers->cs,
-      .off = m->registers->ip,
-    };
     hydra_hook_t *ent = hydra_hook_find(s);
     if (ent) {
       result = run_begin(ent, m);

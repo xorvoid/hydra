@@ -17,6 +17,21 @@
 #define ENABLE_DEBUG_CALLSTACK 0
 #define MAX_HOOKS 2048
 
+// FIXME: FIND A GOOD HOME
+enum {
+  HYDRA_MODE_NORMAL = 0,
+  HYDRA_MODE_CAPTURE = 1,
+  HYDRA_MODE_RESTORE = 2,
+};
+
+typedef struct hydra_mode hydra_mode_t;
+struct hydra_mode {
+  int mode;
+  addr_t capture_addr;       // valid only when mode == CAPTURE
+  const char *state_path;
+};
+extern hydra_mode_t HYDRA_MODE[1];
+
 /********************************************************************/
 /* conf.c */
 
@@ -36,6 +51,7 @@ struct hydra_hook
 
 void hydra_hook_register(hydra_hook_t entry);
 hydra_hook_t * hydra_hook_find(addr_t addr);
+bool hydra_hook_entry(addr_t addr);
 
 /********************************************************************/
 /* exec.c */

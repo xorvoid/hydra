@@ -225,3 +225,10 @@ static inline bool parse_i8(const char *s, i8 *_num)
   *_num = (i8)num;
   return true;
 }
+
+static inline bool starts_with(const char *s, const char *prefix) {
+  size_t s_len = strlen(s);
+  size_t prefix_len = strlen(prefix);
+  if (s_len < prefix_len) return false;
+  return 0 == memcmp(s, prefix, prefix_len);
+}

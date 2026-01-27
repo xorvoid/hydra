@@ -219,6 +219,9 @@
 
 #define UNKNOWN() hydra_impl_unknown(__FUNCTION__, __LINE__)
 
+#define MACHINE_STATE_SAVE(path)    m->hardware->state_save(m->hardware->ctx, path)
+#define MACHINE_STATE_RESTORE(path) m->hardware->state_restore(m->hardware->ctx, path)
+
 /* Implementations provided "out-of-line" */
 void     hydra_impl_unknown(const char *func, int line);
 void     hydra_impl_call_far(u16 seg, u16 off);
