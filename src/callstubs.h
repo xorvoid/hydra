@@ -27,7 +27,7 @@
 
 static void hydra_impl_call(hydra_machine_t *m, u16 seg, u16 off, int flags)
 {
-  if (flags & NEAR) CALL_NEAR(16*(u32)seg + off);
+  if (flags & NEAR) CALL_NEAR_ABS(16*(u32)seg + off);
   else CALL_FAR(seg, off);
 }
 

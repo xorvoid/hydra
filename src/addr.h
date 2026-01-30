@@ -7,6 +7,7 @@
 // printf formatting
 #define ADDR_FMT      "%04x:%04x"
 #define ADDR_ARG(s)   (s).seg, (s).off
+#define ADDR_MAKE(_seg, _off) ({ addr_t a; a.seg = (_seg); a.off = (_off); a; })
 
 typedef struct addr addr_t;
 struct addr

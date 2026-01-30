@@ -6,7 +6,9 @@ void hydra_impl_unknown(const char *func, int line)
   abort();                                                              \
 }
 
-void hydra_impl_call_far(u16 seg, u16 off)
+#define U32_MAKE(upper, lower) ((u32)(upper) << 16 | (u32)(lower))
+
+u32 hydra_impl_call_far(u16 seg, u16 off)
 {
   // Grab the current execution context
   u16 exec_id = 0;
@@ -44,9 +46,11 @@ void hydra_impl_call_far(u16 seg, u16 off)
   m->registers->ip = exec->saved_ip;
 
   // Return into the hook impl
+
+  return U32_MAKE(m->registers->dx, m->registers->ax);
 }
 
-void hydra_impl_call_near_off(u16 off, int maybe_reloc)
+u32 hydra_impl_call_near_off(u16 off, int maybe_reloc)
 {
   // Grab the current execution context
   u16 exec_id = 0;
@@ -92,31 +96,33 @@ void hydra_impl_call_near_off(u16 off, int maybe_reloc)
   m->registers->ip = exec->saved_ip;
 
   // Return into the hook impl
+
+  return U32_MAKE(m->registers->dx, m->registers->ax);
 }
 
 
-void hydra_impl_call_near_abs(u16 abs_off)
+u32 hydra_impl_call_near_abs(u16 abs_off)
 {
   // Grab the current execution context
   u16 exec_id = 0;
   hydra_exec_ctx_t *exec = execution_context_get(&exec_id);
   hydra_machine_t *m = &exec->machine;
 
-  hydra_impl_call_near_off(abs_off - 16*(m->registers->cs - CODE_START_SEG), 0);
+  return hydra_impl_call_near_off(abs_off - 16*(m->registers->cs - CODE_START_SEG), 0);
 }
 
-void hydra_impl_call_far_cs(u16 cs_reg_value, u16 off)
+u32 hydra_impl_call_far_cs(u16 cs_reg_value, u16 off)
 {
   assert(cs_reg_value >= CODE_START_SEG);
-  hydra_impl_call_far(cs_reg_value - CODE_START_SEG, off);
+  return hydra_impl_call_far(cs_reg_value - CODE_START_SEG, off);
 }
 
-void hydra_impl_call_far_indirect(u32 addr)
+u32 hydra_impl_call_far_indirect(u32 addr)
 {
   u16 seg = addr>>16;
   u16 off = addr;
   assert(seg >= CODE_START_SEG);
-  hydra_impl_call_far(seg - CODE_START_SEG, off);
+  return hydra_impl_call_far(seg - CODE_START_SEG, off);
 }
 
 // FIXME

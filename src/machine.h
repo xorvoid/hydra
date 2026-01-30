@@ -2,6 +2,10 @@
 #include "addr.h"
 #include "typecheck.h"
 
+#ifndef ARRAY_SIZE
+# define ARRAY_SIZE(arr) (sizeof(arr)/sizeof((arr)[0]))
+#endif
+
 /* Macros to be able to decompile to 8086-like C and compile it all into
    working code. Goal is then to re-write to more sane C */
 
@@ -141,7 +145,15 @@
     } \
   } while(0)
 
-#define CALL_FAR(seg, off) hydra_impl_call_far(seg, off)
+#define CALL_FAR(seg, off, ...) CALL_FAR_ARGS(seg, off, __VA_ARGS__)
+
+#define CALL_FAR_ARGS(seg, off, ...)  ({        \
+  u16 args[] = {__VA_ARGS__}; \
+  PUSH_ARGS(args); \
+  u32 ret = hydra_impl_call_far(seg, off);     \
+  POP_ARGS(args);                \
+  ret; })
+
 #define CALL_FAR_CS(off) hydra_impl_call_far_cs(CS, off);
 
 #define CALL_FAR_INDIRECT(addr, ...) ({         \
@@ -153,11 +165,12 @@
 
 #define CALL_NEAR_OFF(off) hydra_impl_call_near_off(off, 0)
 #define CALL_NEAR_OFF_RELOC(off) hydra_impl_call_near_off(off, 1)
-#define CALL_NEAR(off) hydra_impl_call_near_abs(off)
+#define CALL_NEAR_ABS(off) hydra_impl_call_near_abs(off)
+#define CALL_NEAR(_seg, off) hydra_impl_call_near_off(off, 0)
 #define CALL_FUNC(name) hydra_impl_call_func(#name)
 
 #define PUSH_ARGS(args) do { \
-    for (size_t i = 0; i < ARRAY_SIZE(args); i++) { PUSH(args[i]); } \
+    for (size_t i = ARRAY_SIZE(args); i > 0; i--) { PUSH(args[i-1]); } \
 } while(0)
 
 #define POP_ARGS(args) do { \
@@ -224,12 +237,12 @@
 
 /* Implementations provided "out-of-line" */
 void     hydra_impl_unknown(const char *func, int line);
-void     hydra_impl_call_far(u16 seg, u16 off);
-void     hydra_impl_call_far_cs(u16 cs_reg_value, u16 off);
-void     hydra_impl_call_far_indirect(u32 addr);
-void     hydra_impl_call_near_off(u16 off, int maybe_reloc);
-void     hydra_impl_call_near_abs(u16 abs_off);
-void     hydra_impl_call_func(const char *name);
+u32      hydra_impl_call_far(u16 seg, u16 off);
+u32      hydra_impl_call_far_cs(u16 cs_reg_value, u16 off);
+u32      hydra_impl_call_far_indirect(u32 addr);
+u32      hydra_impl_call_near_off(u16 off, int maybe_reloc);
+u32      hydra_impl_call_near_abs(u16 abs_off);
+u32      hydra_impl_call_func(const char *name);
 void     hydra_impl_cli(void);
 void     hydra_impl_sti(void);
 u8       hydra_impl_inb(u16 port);
