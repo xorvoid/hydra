@@ -34,7 +34,7 @@ enum {
 
 /* Registration macros */
 #define HYDRA_REGISTER_ADDR(func, seg, off, flags) hydra_impl_register_addr(func, seg, off, flags)
-#define HYDRA_REGISTER(name, flags) hydra_impl_register("F_" #name, H_ ## name, flags)
+#define HYDRA_REGISTER(name) hydra_impl_register("F_" #name, H_ ## name, IS_OVERLAY_F_ ## name)
 #define HYDRA_DEAD_ADDR(func, seg, off, flags) HYDRA_REGISTER_ADDR(hydra_impl_dead, seg, off, flags)
 #define HYDRA_DEAD(name, flags) hydra_impl_register("F_" #name, hydra_impl_dead, flags)
 
