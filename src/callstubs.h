@@ -24,6 +24,8 @@
 
 #define HYDRA_DEFINE_CALLSTUB_6(name, ret, seg, off, flags) static HYDRA_MAYBE_UNUSED ret name(hydra_machine_t *m, u16 arg1, u16 arg2, u16 arg3, u16 arg4, u16 arg5, u16 arg6) { return (ret)hydra_impl_callstub_6(m, seg, off, flags, arg1, arg2, arg3, arg4, arg5, arg6); }
 
+#define HYDRA_DEFINE_CALLSTUB_7(name, ret, seg, off, flags) static HYDRA_MAYBE_UNUSED ret name(hydra_machine_t *m, u16 arg1, u16 arg2, u16 arg3, u16 arg4, u16 arg5, u16 arg6, u16 arg7) { return (ret)hydra_impl_callstub_7(m, seg, off, flags, arg1, arg2, arg3, arg4, arg5, arg6, arg7); }
+
 
 static void hydra_impl_call(hydra_machine_t *m, u16 seg, u16 off, int flags)
 {
@@ -97,5 +99,19 @@ static HYDRA_MAYBE_UNUSED u32 hydra_impl_callstub_6(hydra_machine_t *m, u16 seg,
   PUSH(arg1);
   hydra_impl_call(m, seg, off, flags);
   if (!(flags & DONT_POP_ARGS)) SP += 0xc;
+  return (u32)DX << 16 | AX;
+}
+
+static HYDRA_MAYBE_UNUSED u32 hydra_impl_callstub_7(hydra_machine_t *m, u16 seg, u16 off, int flags, u16 arg1, u16 arg2, u16 arg3, u16 arg4, u16 arg5, u16 arg6, u16 arg7)
+{
+  PUSH(arg7);
+  PUSH(arg6);
+  PUSH(arg5);
+  PUSH(arg4);
+  PUSH(arg3);
+  PUSH(arg2);
+  PUSH(arg1);
+  hydra_impl_call(m, seg, off, flags);
+  if (!(flags & DONT_POP_ARGS)) SP += 0xe;
   return (u32)DX << 16 | AX;
 }
