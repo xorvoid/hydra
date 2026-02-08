@@ -12,20 +12,16 @@ def gen_functions(functions):
             extra += 'dont_pop_args 1 '
         if func.flags == 'INDIRECT_CALL_LOCATION':
             extra += 'indirect_call_location 1 '
-        if func.overlay_num is not None:
-            extra += f'overlay_num {func.overlay_num} '
-        if func.overlay_start is not None:
-            extra += f'overlay_start {func.overlay_start} '
-        if func.overlay_end is not None:
-            extra += f'overlay_end {func.overlay_end} '
+        if func.entry_stub is not None:
+            extra += f'entry {func.entry_stub} '
         if func.regargs is not None:
             extra += f'regargs {func.regargs} '
         mode = 'far'
         if func.flags == 'NEAR':
             mode = 'near'
-        end = ''
+        start = '""' if not func.start_addr else func.start_addr
         end = '""' if not func.end_addr else func.end_addr
-        emit(f'    {func.name:30} {{ start {func.start_addr} end {end} mode {mode} ret {func.ret} args {func.args} {extra}}} ')
+        emit(f'    {func.name:30} {{ start {start} end {end} mode {mode} ret {func.ret} args {func.args} {extra}}} ')
     emit("  }");
 
 def gen_structures(structures):

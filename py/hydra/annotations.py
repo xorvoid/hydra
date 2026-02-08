@@ -107,15 +107,14 @@ class Addr:
 UNKNOWN=-1
 
 class Function:
-    def __init__(self, name, ret, args, start_addr, end_addr, flags=0, overlay=None, regargs=None):
+    def __init__(self, name, ret, args, start_addr, end_addr, flags=0, regargs=None, entry=None):
         self.name = name
         self.ret = ret
         self.args = args
-        self.start_addr = Addr(start_addr) if start_addr else None
+        self.start_addr = Addr(start_addr)
         self.end_addr = Addr(end_addr) if end_addr else None
-        self.overlay_num = overlay[0] if overlay else None
-        self.overlay_start = Off(overlay[1]) if overlay else None
-        self.overlay_end = Off(overlay[2]) if overlay else None
+        self.entry_stub = Addr(entry) if entry else None
+        self.is_overlay = self.start_addr.overlay
         self.regargs = ','.join(regargs) if regargs else None
         self.flags = flags
 
