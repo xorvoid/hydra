@@ -32,10 +32,13 @@ def gen_hdr(data, out=None):
     for func in functions:
         if func.flags == 'INDIRECT_CALL_LOCATION': continue ## a call location, not a function location.. skip
         args = "IGNORE" if func.args < 0 else str(func.args)
-        if func.start_addr is None:
-            continue
-        seg = f'0x{func.start_addr.seg:04x}'
-        off = f'0x{func.start_addr.off:04x}'
+        entry = func.start_addr
+        if func.is_overlay:
+            if func.entry_stub is None:
+                continue
+            entry = func.entry_stub
+        seg = f'0x{entry.seg:04x}'
+        off = f'0x{entry.off:04x}'
         flags = str(func.flags)
         emit(f'  _( {func.name+",":30} {func.ret+",":8} {args+",":10} {seg+",":7} {off+",":7} {flags:15} )\\')
 
