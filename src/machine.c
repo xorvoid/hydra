@@ -174,6 +174,20 @@ void hydra_impl_nop(void)
   hydra_impl_raw_code(code, 1);
 }
 
+// cld
+void hydra_impl_cld(void)
+{
+  u8 machine_code[] = {0xfc, 0xcb}; /* cld; retf; */
+  hydra_impl_raw_code(machine_code, ARRAY_SIZE(machine_code));
+}
+
+// std
+void hydra_impl_std(void)
+{
+  u8 machine_code[] = {0xfd, 0xcb}; /* std; retf; */
+  hydra_impl_raw_code(machine_code, ARRAY_SIZE(machine_code));
+}
+
 // cli
 void hydra_impl_cli(void)
 {

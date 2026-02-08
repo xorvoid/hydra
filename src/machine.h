@@ -166,7 +166,13 @@
 #define CALL_NEAR_OFF(off) hydra_impl_call_near_off(off, 0)
 #define CALL_NEAR_OFF_RELOC(off) hydra_impl_call_near_off(off, 1)
 #define CALL_NEAR_ABS(off) hydra_impl_call_near_abs(off)
-#define CALL_NEAR(_seg, off) hydra_impl_call_near_off(off, 0)
+#define CALL_NEAR(_seg, off, ...) ({                \
+  u16 args[] = {__VA_ARGS__}; \
+  PUSH_ARGS(args); \
+  u32 ret = hydra_impl_call_near_off(off, 0);         \
+  POP_ARGS(args);                \
+  ret; })
+
 #define CALL_FUNC(name) hydra_impl_call_func(#name)
 
 #define PUSH_ARGS(args) do { \
@@ -178,6 +184,8 @@
 } while(0)
 
 #define NOP() hydra_impl_nop()
+#define CLD() hydra_impl_cld()
+#define STD() hydra_impl_std()
 #define CLI() hydra_impl_cli()
 #define STI() hydra_impl_sti()
 
@@ -243,6 +251,8 @@ u32      hydra_impl_call_far_indirect(u32 addr);
 u32      hydra_impl_call_near_off(u16 off, int maybe_reloc);
 u32      hydra_impl_call_near_abs(u16 abs_off);
 u32      hydra_impl_call_func(const char *name);
+void     hydra_impl_cld(void);
+void     hydra_impl_std(void);
 void     hydra_impl_cli(void);
 void     hydra_impl_sti(void);
 u8       hydra_impl_inb(u16 port);
