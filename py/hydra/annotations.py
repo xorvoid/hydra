@@ -82,14 +82,26 @@ class Addr:
     def __init__(self, addr):
         parts = addr.split(':')
         if len(parts) != 2: raise Exception(f'Invalid address: "{addr}"')
-        self.seg = int(parts[0], 16)
-        self.off = int(parts[1], 16)
 
-    def abs(self):
-        return self.seg * 16 + self.off
+        seg_str = parts[0]
+        off_str = parts[1]
+
+        self.overlay = False
+        if seg_str.startswith('overlay_'):
+            self.overlay = True
+            seg_str = seg_str[8:]
+
+        self.seg = int(seg_str, 16)
+        self.off = int(off_str, 16)
+
+    def bytes_since(self, start):
+        assert self.overlay == start.overlay
+        assert self.seg == start.seg
+        return self.off - start.off
 
     def __str__(self):
-        return f'{self.seg:04x}:{self.off:04x}'
+        pre = 'overlay_' if self.overlay else ''
+        return pre + f'{self.seg:04x}:{self.off:04x}'
 
 ### FIXME RENAME
 UNKNOWN=-1
@@ -99,7 +111,7 @@ class Function:
         self.name = name
         self.ret = ret
         self.args = args
-        self.start_addr = Addr(start_addr)
+        self.start_addr = Addr(start_addr) if start_addr else None
         self.end_addr = Addr(end_addr) if end_addr else None
         self.overlay_num = overlay[0] if overlay else None
         self.overlay_start = Off(overlay[1]) if overlay else None
@@ -138,7 +150,7 @@ class TextData:
         self.access_at = access_at
 
         ## infer array size
-        nbytes = self.end_addr.abs() - self.start_addr.abs()
+        nbytes = self.end_addr.bytes_since(self.start_addr)
         if nbytes < 0: raise Exception(f"Negatively sized text-section region: {name}")
         if not self.typ.is_array: raise Exception(f"Expected array for text-section region: {name}")
         eltsz = self.typ.as_basetype().size_in_bytes()
