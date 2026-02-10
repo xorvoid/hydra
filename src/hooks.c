@@ -50,7 +50,6 @@ void hydra_impl_register(const char *name, hydra_result_t (*func)(hydra_machine_
   const hydra_function_def_t *def = hydra_function_find(name);
   if (!def) FAIL("Cannot find function '%s' to register", name);
 
-  printf("registering!\n");
   hydra_hook_t ent = {name, func, def->addr, flags};
   hydra_hook_register(ent);
 }
