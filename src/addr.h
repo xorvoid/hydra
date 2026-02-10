@@ -34,8 +34,9 @@ addr_t addr_relative_to_segment(addr_t s, uint16_t seg);
 
 // Accessors
 static inline uint16_t addr_is_overlay(addr_t s) { return s._i._overlay; }
+static inline uint16_t addr_overlay_num(addr_t s) { assert(s._i._overlay); return s._i._seg; }
 static inline uint16_t addr_seg(addr_t s) { assert(!s._i._overlay); return s._i._seg; }
-static inline uint16_t addr_off(addr_t s) { assert(!s._i._overlay); return s._i._off; }
+static inline uint16_t addr_off(addr_t s) { return s._i._off; }
 
 // Fmt args
 static inline const char * addr_fmtarg_overlay(addr_t s) { return s._i._overlay ? "overlay_" : ""; }

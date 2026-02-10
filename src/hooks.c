@@ -20,10 +20,19 @@ bool hydra_hook_entry(addr_t addr)
 
 hydra_hook_t * hydra_hook_find(addr_t addr)
 {
+  // Subtract off CODE_START_SEG
+  assert(!addr_is_overlay(addr));
+  u16 seg = addr_seg(addr);
+  u16 off = addr_off(addr);
+  if (seg < CODE_START_SEG) return NULL;
+  addr = ADDR_MAKE(seg - CODE_START_SEG, off);
+
+  // Remap to an overlay address, if possible
+  addr = hydra_overlay_segment_remap_from_physical(addr);
+
   for (size_t i = 0; i < num_hooks; i++) {
     hydra_hook_t *ent = &hooks[i];
-    addr_t hook = ADDR_MAKE(ent->hook_cs + CODE_START_SEG, ent->hook_ip);
-    if (addr_equal(addr, hook)) {
+    if (addr_equal(addr, ent->addr)) {
       return ent;
     }
   }
@@ -32,7 +41,7 @@ hydra_hook_t * hydra_hook_find(addr_t addr)
 
 void hydra_impl_register_addr(hydra_result_t (*func)(hydra_machine_t *m), u16 seg, u16 off, int flags)
 {
-  hydra_hook_t ent = {func, seg, off, flags};
+  hydra_hook_t ent = {NULL, func, ADDR_MAKE(seg, off), flags};
   hydra_hook_register(ent);
 }
 
@@ -41,7 +50,8 @@ void hydra_impl_register(const char *name, hydra_result_t (*func)(hydra_machine_
   const hydra_function_def_t *def = hydra_function_find(name);
   if (!def) FAIL("Cannot find function '%s' to register", name);
 
-  hydra_hook_t ent = {func, addr_seg(def->addr), addr_off(def->addr), flags};
+  printf("registering!\n");
+  hydra_hook_t ent = {name, func, def->addr, flags};
   hydra_hook_register(ent);
 }
 

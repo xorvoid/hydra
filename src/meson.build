@@ -8,6 +8,7 @@ SRC = [
   'datasection.c',
   'exec.c',
   'machine.c',
+  'overlay.c',
   'addr.c',
   'dump.c',
 ]

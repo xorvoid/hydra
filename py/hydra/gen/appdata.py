@@ -16,7 +16,7 @@ def build_func_data(functions):
     for func in functions:
         ## a call location, not a function location.. skip
         if func.flags == 'INDIRECT_CALL_LOCATION': continue
-        if func.is_overlay and func.entry_stub is not None:
+        if func.is_overlay_entry:
             dat.append(FuncData(func, func.name, func.entry_stub))
             dat.append(FuncData(func, func.name + "_OVERLAY", func.start_addr))
             continue
@@ -53,10 +53,10 @@ def gen_hdr(data, out=None):
     emit('')
 
     emit('/**************************************************************************************************************/')
-    emit('/* IS_OVERLAY flags */')
+    emit('/* IS_OVERLAY_ENTRY flags */')
     emit('/**************************************************************************************************************/')
     for func in functions:
-        emit('#define IS_OVERLAY_' + func.name + ' ' + ('1' if func.is_overlay else '0'))
+        emit('#define IS_OVERLAY_ENTRY_' + func.name + ' ' + ('1' if func.is_overlay_entry else '0'))
     emit('')
 
     emit('/**************************************************************************************************************/')

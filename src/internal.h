@@ -8,6 +8,7 @@
 #include "dump.h"
 #include "hooks.h"
 #include "machine.h"
+#include "overlay.h"
 #include "callstack.h"
 #include "functions.h"
 
@@ -44,8 +45,9 @@ extern hydra_conf_t HYDRA_CONF[1];
 typedef struct hydra_hook   hydra_hook_t;
 struct hydra_hook
 {
+  const char *name;
   hydra_result_t (*func)(hydra_machine_t *);
-  uint16_t hook_cs, hook_ip;
+  addr_t addr;
   int flags;
 };
 

@@ -9,6 +9,7 @@
 #include "../../src/dump.h"
 #include "../../src/hooks.h"
 #include "../../src/machine.h"
+#include "../../src/overlay.h"
 #include "../../src/functions.h"
 #include "../../src/callstack.h"
 #include "../../src/callstubs.h"

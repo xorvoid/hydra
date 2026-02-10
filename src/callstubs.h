@@ -27,11 +27,15 @@
 
 #define HYDRA_DEFINE_CALLSTUB_7(name, ret, addr, flags) static HYDRA_MAYBE_UNUSED ret name(hydra_machine_t *m, u16 arg1, u16 arg2, u16 arg3, u16 arg4, u16 arg5, u16 arg6, u16 arg7) { return (ret)hydra_impl_callstub_7(m, addr, flags, arg1, arg2, arg3, arg4, arg5, arg6, arg7); }
 
-
 static void hydra_impl_call(hydra_machine_t *m, addr_t addr, int flags)
 {
-  assert(!addr_is_overlay(addr));
-  u16 seg = addr_seg(addr);
+  u16 seg;
+  if (addr_is_overlay(addr)) {
+    seg = hydra_overlay_segment_lookup(addr_overlay_num(addr));
+  } else {
+    seg = addr_seg(addr);
+  }
+
   u16 off = addr_off(addr);
 
   if (flags & NEAR) CALL_NEAR_ABS(16*(u32)seg + off);

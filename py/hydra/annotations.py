@@ -114,7 +114,7 @@ class Function:
         self.start_addr = Addr(start_addr)
         self.end_addr = Addr(end_addr) if end_addr else None
         self.entry_stub = Addr(entry) if entry else None
-        self.is_overlay = self.start_addr.overlay
+        self.is_overlay_entry = self.start_addr.overlay and self.entry_stub is not None
         self.regargs = ','.join(regargs) if regargs else None
         self.flags = flags
 
