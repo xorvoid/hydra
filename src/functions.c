@@ -28,6 +28,7 @@ const char *hydra_function_name(addr_t s)
  u32 addr = addr_abs(s);
   for (size_t i = 0; i < md->n_defs; i++) {
     const hydra_function_def_t *f = &md->defs[i];
+    if (addr_is_overlay(f->addr)) continue; // ignore overlays
     if (addr == addr_abs(f->addr)) {
       return f->name;
     }

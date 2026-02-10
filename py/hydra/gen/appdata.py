@@ -1,10 +1,35 @@
 import sys
 
+class FuncData:
+    def __init__(self, func, name, entry):
+        self.name = name
+        self.ret = func.ret
+        self.args = "IGNORE" if func.args < 0 else str(func.args)
+        self.overlay = str(int(entry.overlay))
+        self.seg = f'0x{entry.seg:04x}'
+        self.off = f'0x{entry.off:04x}'
+
+        self.flags = str(func.flags)
+
+def build_func_data(functions):
+    dat = []
+    for func in functions:
+        ## a call location, not a function location.. skip
+        if func.flags == 'INDIRECT_CALL_LOCATION': continue
+        if func.is_overlay and func.entry_stub is not None:
+            dat.append(FuncData(func, func.name, func.entry_stub))
+            dat.append(FuncData(func, func.name + "_OVERLAY", func.start_addr))
+            continue
+        dat.append(FuncData(func, func.name, func.start_addr))
+    return dat
+
 def gen_hdr(data, out=None):
     f = sys.stdout if not out else out
     def emit(s): print(s, file=f)
 
     functions = data['functions']
+    func_data = build_func_data(functions)
+
     datasection = data['data_section']
     structures = data['structures']
 
@@ -20,39 +45,15 @@ def gen_hdr(data, out=None):
     ## We kept it for now to make it easy to get python code gen up and running
 
     emit('/**************************************************************************************************************/')
-    emit('/* Functions */')
+    emit('/* Callstubs */')
     emit('/**************************************************************************************************************/')
-    emit('')
-    emit('#define HYDRA_FUNCTION_DEFINITIONS(_)\\')
-    emit('  /**********************************************************/\\')
-    emit('  /* NAME                   RET   NARGS SEG OFF FLAGS */\\')
-    emit('  /**********************************************************/\\')
-    emit('  /* EXTRA NAMES: DON\'T GEN STUBS HERE: "IGNORE" */\\')
-
-    for func in functions:
-        if func.flags == 'INDIRECT_CALL_LOCATION': continue ## a call location, not a function location.. skip
-        args = "IGNORE" if func.args < 0 else str(func.args)
-        entry = func.start_addr
-        if func.is_overlay:
-            if func.entry_stub is None:
-                continue
-            entry = func.entry_stub
-        seg = f'0x{entry.seg:04x}'
-        off = f'0x{entry.off:04x}'
-        flags = str(func.flags)
-        emit(f'  _( {func.name+",":30} {func.ret+",":8} {args+",":10} {seg+",":7} {off+",":7} {flags:15} )\\')
-
+    for func in func_data:
+        addr = f'ADDR_MAKE_EXT({func.overlay}, {func.seg}, {func.off})'
+        emit(f'HYDRA_DEFINE_CALLSTUB( {func.name+",":30} {func.ret+",":8} {func.args+",":10} {addr}, {func.flags:15} )')
     emit('')
 
     emit('/**************************************************************************************************************/')
-    emit('/* Generate Callstubs */')
-    emit('/**************************************************************************************************************/')
-    emit('')
-    emit('HYDRA_FUNCTION_DEFINITIONS(HYDRA_DEFINE_CALLSTUB)')
-    emit('')
-
-    emit('/**************************************************************************************************************/')
-    emit('/* Define IS_OVERLAY flags */')
+    emit('/* IS_OVERLAY flags */')
     emit('/**************************************************************************************************************/')
     for func in functions:
         emit('#define IS_OVERLAY_' + func.name + ' ' + ('1' if func.is_overlay else '0'))
@@ -91,23 +92,28 @@ def gen_src(data, out=None):
     f = sys.stdout if not out else out
     def emit(s): print(s, file=f)
 
+    functions = data['functions']
+    func_data = build_func_data(functions)
+
     emit('#include "hydra_user_appdata.h"')
     emit('')
     emit('/**************************************************************************************************************/')
     emit('/* Generate Function Metdata */')
     emit('/**************************************************************************************************************/')
     emit('')
+    emit('static hydra_function_def_t metadata[] = {')
+    #emit('    HYDRA_FUNCTION_DEFINITIONS(DEFINE_FUNCDEF)')
+    for func in func_data:
+        #emit(f'    DEFINE_FUNCDEF( {func.name+",":30} {func.ret+",":8} {func.args+",":10} {func.seg+",":7} {func.off+",":7} {func.flags:15} )')
+        name = f'"{func.name}",'
+        emit(f'  {{ {name:30} {{{{ {func.overlay}, {func.seg}, {func.off} }}}} }},')
+    emit('};')
+    emit('')
     emit('const hydra_function_metadata_t * hydra_user_functions(void)')
     emit('{')
-    emit('  static hydra_function_def_t defs[] = {')
-    emit('#define DEFINE_FUNCDEF(name, _2, _3, seg, off, _6) {#name, {{0, seg, off}}},')
-    emit('    HYDRA_FUNCTION_DEFINITIONS(DEFINE_FUNCDEF)')
-    emit('#undef DEFINE_FUNCDEF')
-    emit('  };')
-    emit('')
     emit('  static hydra_function_metadata_t md[1];')
-    emit('  md->n_defs = sizeof(defs)/sizeof(defs[0]);')
-    emit('  md->defs = defs;')
+    emit('  md->n_defs = sizeof(metadata)/sizeof(metadata[0]);')
+    emit('  md->defs = metadata;')
     emit('')
     emit('  return md;')
     emit('}')

@@ -81,7 +81,7 @@ def main():
         "-c",          "exit"
     ]
 
-    os.execvp(str(dosbox), cmd)
+    os.execvp(cmd[0], cmd)
 
 if __name__ == '__main__':
     main()
