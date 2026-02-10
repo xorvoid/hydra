@@ -130,13 +130,12 @@ static hydra_result_t run_begin(hydra_hook_t *hook, hydra_machine_t *m)
     u32 addr = (u32)m->registers->cs * 16 + m->registers->ip;
     u8 * mem = m->hardware->mem_hostaddr(m->hardware->ctx, addr);
 
-    addr_t stub;
-    stub.seg = m->registers->cs - CODE_START_SEG;
-    stub.off = m->registers->ip;
+    addr_t stub =
+      ADDR_MAKE(m->registers->cs - CODE_START_SEG, m->registers->ip);
 
     // "int 0x3f" is encoded as "cd 3f"
     if (0 == memcmp(mem, "\xcd\x3f", 2)) {
-      printf("Call to %04x:%04x but it's not paged in.. waiting..\n", stub.seg, stub.off);
+      printf("Call to " ADDR_FMT " but it's not paged in.. waiting..\n", ADDR_ARG(stub));
       return HYDRA_RESULT_RESUME();
     }
 
@@ -144,18 +143,20 @@ static hydra_result_t run_begin(hydra_hook_t *hook, hydra_machine_t *m)
       FAIL("Expected a Jump Far, found: 0x%02x", mem[0]);
     }
 
-    addr_t dest;
-    memcpy(&dest.off, mem+1, 2);
-    memcpy(&dest.seg, mem+3, 2);
+    u16 off, seg;
+    memcpy(&off, mem+1, 2);
+    memcpy(&seg, mem+3, 2);
+
+    addr_t dest = ADDR_MAKE(seg, off);
 
     overlay_entry_t *ent = overlay_tracking_find_or_alloc(stub);
     if (!addr_equal(dest, ent->dest)) {
-      printf("Call to %04x:%04x paged into %04x:%04x\n", stub.seg, stub.off, dest.seg, dest.off);
+      printf("Call to " ADDR_FMT " paged into " ADDR_FMT "\n", ADDR_ARG(stub), ADDR_ARG(dest));
       ent->dest = dest;
     }
 
-    m->registers->cs = dest.seg;
-    m->registers->ip = dest.off;
+    m->registers->cs = addr_seg(dest);
+    m->registers->ip = addr_off(dest);
   }
 
   hydra_exec_ctx_t *exec = execution_acquire();
@@ -215,7 +216,7 @@ int hydra_exec_run_special_modes(hydra_machine_t *m, addr_t addr, int *_done) {
   *_done = 1;
   switch (HYDRA_MODE->mode) {
     case HYDRA_MODE_CAPTURE: {
-      if (addr.seg == HYDRA_MODE->capture_addr.seg + CODE_START_SEG && addr.off == HYDRA_MODE->capture_addr.off) {
+      if (addr_seg(addr) == addr_seg(HYDRA_MODE->capture_addr) + CODE_START_SEG && addr_off(addr) == addr_off(HYDRA_MODE->capture_addr)) {
         m->hardware->state_save(m->hardware->ctx, HYDRA_MODE->state_path);
         exit(0);
       }
@@ -237,10 +238,7 @@ int hydra_exec_run_special_modes(hydra_machine_t *m, addr_t addr, int *_done) {
 
 int hydra_exec_run(hydra_machine_t *m)
 {
-  addr_t s = {
-    .seg = m->registers->cs,
-    .off = m->registers->ip,
-  };
+  addr_t s = ADDR_MAKE(m->registers->cs, m->registers->ip);
 
   // Handle special capture/restore modes
   int done = 0;

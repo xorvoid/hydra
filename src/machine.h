@@ -224,9 +224,10 @@
 #define PTR_TO_OFF(_ptr, seg) hydra_impl_ptr_to_off(m, (_ptr), (seg))
 #define PTR_TO_32(_ptr) hydra_impl_ptr_to_32(m, (_ptr))
 
-#define PTR_TO_ARGS(ptr) PTR_TO_ADDR(ptr).off, PTR_TO_ADDR(ptr).seg
+#define PTR_TO_ARGS(ptr) ADDR_TO_ARGS(PTR_TO_ADDR(ptr))
 #define U32_TO_ARGS(_u32) LOWER(_u32), UPPER(_u32)
 
+#define ADDR_TO_ARGS(addr) addr_off(addr), addr_seg(addr)
 
 #define RETURN_RESUME()       return HYDRA_RESULT_RESUME()
 #define RETURN_JUMP(seg, off) return HYDRA_RESULT_JUMP(seg, off)

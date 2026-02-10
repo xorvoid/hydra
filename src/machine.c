@@ -266,7 +266,7 @@ addr_t hydra_impl_ptr_to_addr(hydra_machine_t *m, void *ptr)
   uint32_t addr = hydra_impl_ptr_to_flataddr(m, ptr);
   assert(addr <= 1<<20);
 
-  addr_t ret = {addr>>4, addr&15};
+  addr_t ret = ADDR_MAKE(addr>>4, addr&15);
   return ret;
 }
 
@@ -288,5 +288,5 @@ uint16_t hydra_impl_ptr_to_off(hydra_machine_t *m, void *ptr, uint16_t seg)
 uint32_t hydra_impl_ptr_to_32(hydra_machine_t *m, void *ptr)
 {
   addr_t s = hydra_impl_ptr_to_addr(m, ptr);
-  return (uint32_t)s.seg << 16 | s.off;
+  return (uint32_t)addr_seg(s) << 16 | addr_off(s);
 }

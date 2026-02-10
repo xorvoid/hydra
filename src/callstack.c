@@ -19,7 +19,7 @@ enum {
 
 struct callstack
 {
-  size_t   last_interrupt_count;
+  size_t last_interrupt_count;
   addr_t last_code;
 
   call_t call_stack[1024];
@@ -33,8 +33,7 @@ static callstack_t c[1];
 void hydra_callstack_init(void)
 {
   c->last_interrupt_count = 0;
-  c->last_code.seg        = 0;
-  c->last_code.off        = 0;
+  c->last_code            = ADDR_MAKE(0, 0);
   c->call_idx             = 0;
   c->call_event           = CALL_EVENT_NONE;
   c->md                   = NULL;
@@ -49,8 +48,7 @@ void hydra_callstack_init(void)
 void hydra_callstack_trigger_enter(u16 seg, u16 off)
 {
   assert(c->call_event == CALL_EVENT_NONE);
-  c->last_code.seg = seg;
-  c->last_code.off = off;
+  c->last_code = ADDR_MAKE(seg, off);
   c->call_event = CALL_EVENT_CALL;
 }
 
@@ -101,7 +99,7 @@ static call_t *callstack_pop(size_t *_depth)
 
 static void callstack_enter(const char *type, hydra_machine_registers_t *registers, addr_t _from)
 {
-  addr_t cur = {registers->cs, registers->ip};
+  addr_t cur = ADDR_MAKE(registers->cs, registers->ip);
   size_t depth = 0;
   call_t *call = callstack_push(_from, cur, &depth);
 
@@ -137,7 +135,7 @@ static void callstack_enter(const char *type, hydra_machine_registers_t *registe
 
 static void callstack_leave(const char *type, hydra_machine_registers_t *registers)
 {
-  addr_t cur = {registers->cs, registers->ip};
+  addr_t cur = ADDR_MAKE(registers->cs, registers->ip);
 
   size_t depth = 0;
   call_t *call = callstack_pop(&depth);
@@ -145,11 +143,11 @@ static void callstack_leave(const char *type, hydra_machine_registers_t *registe
   // Adjust all the addresses for the base load segment
   addr_t from = addr_relative_to_segment(c->last_code, CODE_START_SEG);
   addr_t to = addr_relative_to_segment(cur, CODE_START_SEG);
-  addr_t src = {};
+  addr_t src = ADDR_MAKE(0, 0);
   bool unexpected_return = false;
   if (call) {
     src = addr_relative_to_segment(call->src, CODE_START_SEG);
-    unexpected_return = (to.seg - src.seg != 0 || to.off - src.off > 5);
+    unexpected_return = addr_difference(to, src) > 5; //(to._i._seg - src._i._seg != 0 || to._i._off - src._i._off > 5);
   }
 
   if (unexpected_return) {
@@ -240,7 +238,7 @@ static hydra_callstack_conf_t * conf_find(hydra_machine_t *m, int type)
   for (size_t i = 0; i < c->md->n_confs; i++) {
     hydra_callstack_conf_t *conf = &c->md->confs[i];
     if (conf->type != type) continue;
-    if (m->registers->cs == conf->addr.seg + CODE_START_SEG && m->registers->ip == conf->addr.off) {
+    if (m->registers->cs == addr_seg(conf->addr) + CODE_START_SEG && m->registers->ip == addr_off(conf->addr)) {
       return conf;
     }
   }
@@ -252,9 +250,9 @@ static void update(hydra_machine_t *m, size_t interrupt_count)
   // Report interrupts
   if (interrupt_count != c->last_interrupt_count) {
     if (m->registers->cs != 0xc000 && m->registers->cs != 0xf000) {
-      addr_t cur = {m->registers->cs - CODE_START_SEG, m->registers->ip};
-      addr_t stack_ptr = {m->registers->ss, m->registers->sp};
-      addr_t src = {m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr))};
+      addr_t cur = ADDR_MAKE(m->registers->cs - CODE_START_SEG, m->registers->ip);
+      addr_t stack_ptr = ADDR_MAKE(m->registers->ss, m->registers->sp);
+      addr_t src = ADDR_MAKE(m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)));
       src = addr_relative_to_segment(src, CODE_START_SEG);
       if (ENABLE_DEBUG_CALLSTACK) printf("INTERRUPT to " ADDR_FMT "(src: " ADDR_FMT ")\n", ADDR_ARG(cur), ADDR_ARG(src));
     }
@@ -266,8 +264,8 @@ static void update(hydra_machine_t *m, size_t interrupt_count)
   hydra_callstack_conf_t *h = conf_find(m, HYDRA_CALLSTACK_CONF_TYPE_HANDLER);
   if (h) {
     // Found! Pull the save return address from the satck and "enter"
-    addr_t stack_ptr = {m->registers->ss, m->registers->sp};
-    addr_t src = {m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr))};
+    addr_t stack_ptr = ADDR_MAKE(m->registers->ss, m->registers->sp);
+    addr_t src = ADDR_MAKE(m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)+2), m->hardware->mem_read16(m->hardware->ctx, addr_abs(stack_ptr)));
     callstack_enter(h->name, m->registers, src);
   }
 
@@ -317,15 +315,13 @@ void hydra_callstack_notify(hydra_machine_t *m)
     } break;
 }
   c->call_event = CALL_EVENT_NONE;
-  c->last_code.seg = m->registers->cs;
-  c->last_code.off = m->registers->ip;
+  c->last_code = ADDR_MAKE(m->registers->cs, m->registers->ip);
 }
 
 void hydra_callstack_track(hydra_machine_t *m, size_t interrupt_count)
 {
   update(m, interrupt_count);
-  c->last_code.seg = m->registers->cs;
-  c->last_code.off = m->registers->ip;
+  c->last_code = ADDR_MAKE(m->registers->cs, m->registers->ip);
 }
 
 void hydra_callstack_ret(hydra_machine_t *m)

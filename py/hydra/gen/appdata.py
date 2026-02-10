@@ -100,7 +100,7 @@ def gen_src(data, out=None):
     emit('const hydra_function_metadata_t * hydra_user_functions(void)')
     emit('{')
     emit('  static hydra_function_def_t defs[] = {')
-    emit('#define DEFINE_FUNCDEF(name, _2, _3, seg, off, _6) {#name, {seg, off}},')
+    emit('#define DEFINE_FUNCDEF(name, _2, _3, seg, off, _6) {#name, {{0, seg, off}}},')
     emit('    HYDRA_FUNCTION_DEFINITIONS(DEFINE_FUNCDEF)')
     emit('#undef DEFINE_FUNCDEF')
     emit('  };')
@@ -118,7 +118,7 @@ def gen_src(data, out=None):
     for conf in data['callstack']:
         type_str = f'HYDRA_CALLSTACK_CONF_TYPE_{conf.typ},'
         name_str = f'"{conf.name}",'
-        emit(f'    {{ {type_str:<40} {name_str:<25} {{ 0x{conf.addr.seg:04x}, 0x{conf.addr.off:04x} }} }},')
+        emit(f'    {{ {type_str:<40} {name_str:<25} {{{{ 0, 0x{conf.addr.seg:04x}, 0x{conf.addr.off:04x} }}}} }},')
     emit('  };')
     emit('')
     emit('  static hydra_callstack_metadata_t md[1];')
