@@ -3,8 +3,8 @@ import sys
 class FuncData:
     def __init__(self, func, name, entry):
         self.name = name
-        self.ret = func.ret
-        self.args = "IGNORE" if func.args < 0 else str(func.args)
+        self.ret = "u32" if func.ret is None else func.ret  ## assume worst case
+        self.args = "IGNORE" if func.args is None or func.args < 0 else str(func.args)
         self.overlay = str(int(entry.overlay))
         self.seg = f'0x{entry.seg:04x}'
         self.off = f'0x{entry.off:04x}'

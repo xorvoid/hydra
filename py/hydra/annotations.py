@@ -210,3 +210,8 @@ class CallstackConf:
         self.name = name
         self.typ  = typ
         self.addr = Addr(addr)
+
+class CodeSegment:
+    def __init__(self, seg, name):
+        self.seg = seg
+        self.name = name

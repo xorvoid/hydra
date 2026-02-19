@@ -4,6 +4,12 @@ import sys
 out = None
 def emit(s): print(s, file=out)
 
+def gen_code_segments(code_segments):
+    emit("  code_segments {")
+    for i, cs in enumerate(code_segments):
+        emit(f"    _{i:04} {{ seg {cs.seg} name {cs.name:15}  }}")
+    emit("  }")
+
 def gen_functions(functions):
     emit("  functions {");
     for func in functions:
@@ -128,6 +134,7 @@ def gen_conf(data, outfile=None):
     global out
     out = sys.stdout if not outfile else outfile
     emit("dis86 {");
+    gen_code_segments(data['code_segments'])
     gen_functions(data['functions'])
     gen_structures(data['structures'])
     gen_data_section(data['data_section'])
