@@ -106,8 +106,15 @@ class Addr:
 ### FIXME RENAME
 UNKNOWN=-1
 
+FUNCTION_ALL_NAMES = set()
+def _verify_unique(name):
+    if name in FUNCTION_ALL_NAMES:
+        raise Exception(f'Duplicate function name: {name}')
+    FUNCTION_ALL_NAMES.add(name)
+
 class Function:
     def __init__(self, reimpl, name, ret, args, start_addr, end_addr, flags=0, regargs=None, entry=None):
+        _verify_unique(name);
         self.name = name
         self.ret = ret
         self.args = args
