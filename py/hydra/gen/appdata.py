@@ -8,7 +8,6 @@ class FuncData:
         self.overlay = str(int(entry.overlay))
         self.seg = f'0x{entry.seg:04x}'
         self.off = f'0x{entry.off:04x}'
-
         self.flags = str(func.flags)
 
 def build_func_data(functions):
@@ -87,6 +86,21 @@ def gen_hdr(data, out=None):
         if var.typ.is_array:
             end = f' /* array: {var.typ} */'
         emit(f'#define {var.name:30} ({start:15} (hydra_datasection_baseptr() + 0x{var.off:04x})){end}')
+    emit('')
+
+    emit('/**************************************************************************************************************/')
+    emit('/* Hook Registration */')
+    emit('/**************************************************************************************************************/')
+    emit('static inline void hydra_user_appdata__register_all_hooks(void) {')
+    for func in functions:
+        if not func.reimpl: continue
+        name = func.name
+        if name.startswith('F_'):
+            name = name[2:]
+        emit(f'  extern HYDRA_FUNC({"H_"+name});')
+        emit(f'  HYDRA_REGISTER({name});')
+    emit('}')
+    emit('')
 
 def gen_src(data, out=None):
     f = sys.stdout if not out else out

@@ -107,7 +107,7 @@ class Addr:
 UNKNOWN=-1
 
 class Function:
-    def __init__(self, name, ret, args, start_addr, end_addr, flags=0, regargs=None, entry=None):
+    def __init__(self, reimpl, name, ret, args, start_addr, end_addr, flags=0, regargs=None, entry=None):
         self.name = name
         self.ret = ret
         self.args = args
@@ -117,6 +117,7 @@ class Function:
         self.is_overlay_entry = self.start_addr.overlay and self.entry_stub is not None
         self.regargs = ','.join(regargs) if regargs else None
         self.flags = flags
+        self.reimpl = reimpl
 
 class Global:
     def __init__(self, name, typ, off, flags=''):
